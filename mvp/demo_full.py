@@ -25,8 +25,7 @@ from train_par_full import FullPAR, square_pad
 
 MODEL_ID = "google/siglip2-large-patch16-256"
 CKPT = "par_full.pt" if os.path.exists("par_full.pt") else "features/par_full.pt"
-DEVICE = ("cuda" if torch.cuda.is_available()
-          else "mps" if torch.backends.mps.is_available() else "cpu")
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"   # CPU on Mac (MPS unstable with SigLIP-2)
 NAMES = json.load(open("features/attributes.json")) if os.path.exists("features/attributes.json") else \
     ['Female', 'AgeOver60', 'Age18-60', 'AgeLess18', 'Front', 'Side', 'Back', 'Hat', 'Glasses',
      'HandBag', 'ShoulderBag', 'Backpack', 'HoldObjectsInFront', 'ShortSleeve', 'LongSleeve',
@@ -89,7 +88,7 @@ def run(image):
     a1.set_xlabel("feature dimension")
     a2.barh([NAMES[j] for j in top][::-1], sim[top][::-1], color="#8e44ad")
     a2.set_title("Step 1b - PLAIN SigLIP image<->attribute-text match (before any module)")
-    fig.tight_layout(); fig.savefig("/tmp/feat.png", dpi=110); plt.close(fig)
+    fig.tight_layout(); fig.savefig("_feat.png", dpi=110); plt.close(fig)
 
     # STEP 2 — CMAA heatmaps
     gallery = []
@@ -115,8 +114,8 @@ def run(image):
         ax.set_xticks(range(len(NAMES))); ax.set_xticklabels(NAMES, rotation=90, fontsize=5)
         ax.set_yticks(range(len(NAMES))); ax.set_yticklabels(NAMES, fontsize=5)
         fig.colorbar(im); fig.tight_layout()
-        fig.savefig("/tmp/dacg.png", dpi=110); plt.close(fig)
-        dacg_img = "/tmp/dacg.png"
+        fig.savefig("_dacg.png", dpi=110); plt.close(fig)
+        dacg_img = "_dacg.png"
 
     # STEP 5 — final prediction
     pred = probs >= 0.5
@@ -128,7 +127,7 @@ def run(image):
     detected = [NAMES[j] for j in range(len(NAMES)) if pred[j]]
     final = "### Step 5 — Final prediction (26 attributes)\n**Detected:** " + \
             (", ".join(detected) if detected else "(none)")
-    return "/tmp/feat.png", gallery, orient, dacg_img, final
+    return "_feat.png", gallery, orient, dacg_img, final
 
 
 with gr.Blocks(title="Explainable PAR — step by step") as demo:

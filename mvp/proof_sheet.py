@@ -23,8 +23,7 @@ from train_par_full import FullPAR, square_pad
 
 MODEL_ID = "google/siglip2-large-patch16-256"
 CKPT = "par_full.pt" if os.path.exists("par_full.pt") else "features/par_full.pt"
-DEVICE = ("cuda" if torch.cuda.is_available()
-          else "mps" if torch.backends.mps.is_available() else "cpu")
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"   # CPU on Mac (MPS unstable with SigLIP-2)
 NAMES = json.load(open("features/attributes.json")) if os.path.exists("features/attributes.json") \
     else json.load(open("attributes.json"))
 SHOW_ATTRS = [a for a in ["Hat", "Backpack", "Trousers"] if a in NAMES]  # 3 heatmap columns

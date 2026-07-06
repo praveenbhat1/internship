@@ -13,3 +13,8 @@ mvp/data/
 
 # Scratch
 *.tmp
+
+# Demo temp outputs
+mvp/_feat.png
+mvp/_dacg.png
+mvp/proof_sheet.png
