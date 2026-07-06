@@ -3,8 +3,7 @@
 *For my project partner. Open this in Claude Code as reference — it explains what's done, where
 everything is, the gotchas, and what's left to finish.*
 
----
-
+--
 ## 1. What the project is
 **Pedestrian Attribute Recognition:** given a cropped photo of one person, predict a set of
 attributes (clothing, bag, viewpoint, etc.) — multi-label, so each attribute gets its own
