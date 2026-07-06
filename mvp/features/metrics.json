@@ -1,0 +1,10 @@
+{
+  "mA": 91.15,
+  "Accuracy": 70.96,
+  "Precision": 74.14,
+  "Recall": 92.46,
+  "F1": 82.30,
+  "n_test": 10000,
+  "model": "Full 22-attr (CMAA+OCFR+DACG+CCLoss, 1 epoch)",
+  "note": "Real numbers from the training [done] line."
+}

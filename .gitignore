@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Large regenerable caches (regenerate with extract_features.py)
+mvp/features/*_patches.npy
+mvp/features/*_feats.npy
+mvp/data/
+
+# Scratch
+*.tmp
