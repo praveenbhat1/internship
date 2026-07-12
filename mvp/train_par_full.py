@@ -149,6 +149,7 @@ def par_metrics(pred, gt):
 
 def calibrate(scores, labels):
     pred = np.zeros_like(scores, dtype=np.int64)
+    thr = np.full(scores.shape[1], 0.5)                         # per-attribute best thresholds
     for j in range(scores.shape[1]):
         s, y = scores[:, j], labels[:, j]; bt, bb = 0.5, -1.0
         for t in np.quantile(s, np.linspace(0.05, 0.95, 19)):
@@ -158,8 +159,9 @@ def calibrate(scores, labels):
             ba = 0.5 * (tp / (tp + fn + 1e-9) + tn / (tn + fp + 1e-9))
             if ba > bb:
                 bb, bt = ba, t
+        thr[j] = bt
         pred[:, j] = s >= bt
-    return pred
+    return pred, thr
 
 
 @torch.no_grad()
@@ -170,7 +172,8 @@ def evaluate(model, loader, device):
             logits, _ = model(px.to(device))
         P.append(torch.sigmoid(logits).float().cpu().numpy()); Y.append(y.numpy())
     P, Y = np.concatenate(P), np.concatenate(Y).astype(int)
-    return par_metrics(calibrate(P, Y), Y)
+    pred, thr = calibrate(P, Y)
+    return par_metrics(pred, Y), thr
 
 
 def main():
@@ -228,6 +231,8 @@ def main():
     cc_groups = [oi]                                          # viewpoint mutual-exclusion
     if all(a in attrs for a in ["AgeOver60", "Age18-60", "AgeLess18"]):
         cc_groups.append([attrs.index(a) for a in ["AgeOver60", "Age18-60", "AgeLess18"]])
+    if all(a in attrs for a in ["ShortSleeve", "LongSleeve"]):    # sleeve length is mutually exclusive
+        cc_groups.append([attrs.index(a) for a in ["ShortSleeve", "LongSleeve"]])
     print(f"[orient] {oi} | cc_groups {cc_groups}")
 
     def make(split, sh, lim=0):
@@ -262,13 +267,15 @@ def main():
             scaler.step(opt); scaler.update()
             if b % 100 == 0:
                 print(f"  ep{ep+1} b{b}/{len(trl)} loss {loss.item():.3f}", flush=True)
-        mA, acc, prec, rec, f1 = evaluate(model, tel, device)
+        (mA, acc, prec, rec, f1), thr = evaluate(model, tel, device)
         print(f"=== epoch {ep+1}: test mA {mA*100:.2f} | F1 {f1*100:.2f}", flush=True)
         if mA > best_mA:
             best_mA, best_metrics = mA, (mA, acc, prec, rec, f1)
             sd = model.state_dict()                          # save only trained parts (~15MB)
             small = {k: v for k, v in sd.items() if ('lora_' in k) or (not k.startswith('vision.'))}
             torch.save(small, f"{args.out}/par_full.pt")     # backbone re-loads from HF in the demo
+            json.dump({attrs[j]: float(thr[j]) for j in range(len(attrs))},
+                      open(f"{args.out}/thresholds.json", "w"))   # per-attribute thresholds for the demo
             print(f"    (saved best: mA {mA*100:.2f})", flush=True)
 
     mA, acc, prec, rec, f1 = best_metrics

@@ -1,4 +1,8 @@
-torch>=2.0
+# Tested working versions (2026-07): torch 2.12.0, transformers 5.12.1, peft 0.19.1,
+# gradio 6.19.0, matplotlib 3.10.9, numpy 2.4.6, pandas 3.0.3, pillow 12.2.0, scipy 1.18.0
+# Floors below are the known-good minimums. If a fresh install breaks, pin to the exact
+# versions above (they are confirmed to run the demo + training).
+torch>=2.2,<3
 transformers>=4.45
 peft>=0.11
 gradio>=4.0
