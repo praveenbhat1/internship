@@ -9,17 +9,21 @@ Best model ~91% mA. This folder holds the working pipeline, demos, and presentat
 | `demo_full.py` | Live step-by-step demo — upload an image, see every stage (SigLIP → CMAA → OCFR → DACG → prediction) | `python3 demo_full.py` |
 | `proof_sheet.py` | 5 images → predictions + confidence % + CMAA heatmaps → `proof_sheet.png` | `python3 proof_sheet.py` |
 | `stage_extraction.py` | Per-stage figure (works WITHOUT the trained checkpoint) | `python3 stage_extraction.py img.jpg` |
-| `app.py` | Base 85.5 demo (YES/NO, runs locally — no checkpoint download needed) | `python3 app.py` |
 
-> `demo_full.py` / `proof_sheet.py` need `features/par_full.pt` (the 15 MB trained checkpoint — download from Kaggle).
+> `demo_full.py` / `proof_sheet.py` need `features/par_full.pt` + `attributes.json` (+ `thresholds.json`) — download from Kaggle.
+> `demo_full.py --share` opens a public link; default is local only.
 
 ## 🏋️ Training (run on Kaggle GPU, not the Mac)
 | File | Model |
 |---|---|
 | `train_par_full.py` | Full pipeline (CMAA/OCFR/DACG/CCLoss, ablation flags, `--drop_gender_age` / `--drop_age`). Saves a ~15 MB checkpoint. |
-| `extract_features.py` | Cache frozen SigLIP features (regenerates the deleted `.npy` caches if needed) |
-| `train_baseline.py` | Trained linear head on frozen features (85.5 baseline) |
-| `evaluate_zeroshot.py` | Zero-shot baseline (69.5) |
+| `extract_features.py` | Cache frozen SigLIP features — **run this first** to regenerate the deleted `.npy` caches |
+| `train_baseline.py` | Trained linear head on frozen features (85.5 baseline) — needs the caches above |
+| `evaluate_zeroshot.py` | Zero-shot baseline (69.5) — needs the caches above |
+
+> The `*_feats.npy` / `*_patches.npy` caches were deleted to save 8 GB. The 3 baseline scripts
+> above need them — run `extract_features.py` first if you want to reproduce the baselines.
+> (The live demo does NOT need them — `demo_full.py` is fully self-contained.)
 
 ## 📊 Presentation figures
 | File | Shows |
