@@ -165,15 +165,14 @@ def calibrate(scores, labels):
 
 
 @torch.no_grad()
-def evaluate(model, loader, device):
+def scores(model, loader, device):
+    """Raw sigmoid scores + labels for a split (no thresholding, no leakage)."""
     model.eval(); P, Y = [], []
     for px, y in loader:
         with torch.autocast(device_type=device, dtype=torch.float16, enabled=(device == "cuda")):
             logits, _ = model(px.to(device))
         P.append(torch.sigmoid(logits).float().cpu().numpy()); Y.append(y.numpy())
-    P, Y = np.concatenate(P), np.concatenate(Y).astype(int)
-    pred, thr = calibrate(P, Y)
-    return par_metrics(pred, Y), thr
+    return np.concatenate(P), np.concatenate(Y).astype(int)
 
 
 def main():
@@ -242,14 +241,16 @@ def main():
         return DataLoader(PARData(n, l, args.img_dir, proc), batch_size=args.batch,
                           shuffle=sh, num_workers=2), l
 
-    trl, trlab = make("train", True, args.limit_train); tel, _ = make("test", False)
+    trl, trlab = make("train", True, args.limit_train)
+    vll, _ = make("val", False)                              # validation: for leak-free threshold tuning
+    tel, _ = make("test", False)                             # test: reported only, NEVER tuned on
     pos = trlab.sum(0)
     pw = torch.tensor((len(trlab) - pos) / (pos + 1e-6)).clamp(max=20).to(device)
     bce = nn.BCEWithLogitsLoss(pos_weight=pw); ce = nn.CrossEntropyLoss()
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=args.lr, weight_decay=1e-4)
     scaler = torch.cuda.amp.GradScaler(enabled=(device == "cuda"))
 
-    best_mA, best_metrics = -1.0, None
+    best_val, best_metrics = -1.0, None
     for ep in range(args.epochs):
         model.train()
         for b, (px, y) in enumerate(trl):
@@ -267,20 +268,28 @@ def main():
             scaler.step(opt); scaler.update()
             if b % 100 == 0:
                 print(f"  ep{ep+1} b{b}/{len(trl)} loss {loss.item():.3f}", flush=True)
-        (mA, acc, prec, rec, f1), thr = evaluate(model, tel, device)
-        print(f"=== epoch {ep+1}: test mA {mA*100:.2f} | F1 {f1*100:.2f}", flush=True)
-        if mA > best_mA:
-            best_mA, best_metrics = mA, (mA, acc, prec, rec, f1)
+
+        # --- leak-free: tune thresholds + select best epoch on VALIDATION,
+        #     then report on TEST with those frozen thresholds (test never tuned on) ---
+        Pv, Yv = scores(model, vll, device)
+        _, thr = calibrate(Pv, Yv)                           # thresholds from VAL only
+        val_mA = float(par_metrics((Pv >= thr).astype(int), Yv)[0])
+        print(f"=== epoch {ep+1}: val mA {val_mA*100:.2f}", flush=True)
+        if val_mA > best_val:
+            best_val = val_mA
+            Pt, Yt = scores(model, tel, device)              # TEST inference (reported only)
+            best_metrics = par_metrics((Pt >= thr).astype(int), Yt)
             sd = model.state_dict()                          # save only trained parts (~15MB)
             small = {k: v for k, v in sd.items() if ('lora_' in k) or (not k.startswith('vision.'))}
             torch.save(small, f"{args.out}/par_full.pt")     # backbone re-loads from HF in the demo
             json.dump({attrs[j]: float(thr[j]) for j in range(len(attrs))},
-                      open(f"{args.out}/thresholds.json", "w"))   # per-attribute thresholds for the demo
-            print(f"    (saved best: mA {mA*100:.2f})", flush=True)
+                      open(f"{args.out}/thresholds.json", "w"))   # VAL-calibrated thresholds
+            print(f"    (saved best: val mA {val_mA*100:.2f} | test mA {best_metrics[0]*100:.2f})", flush=True)
 
     mA, acc, prec, rec, f1 = best_metrics
-    print(f"\n[done] BEST mA {mA*100:.2f}  Acc {acc*100:.2f}  Prec {prec*100:.2f}  Rec {rec*100:.2f}  F1 {f1*100:.2f}")
-    print("  baselines: zero-shot 69.47 | frozen linear 85.49 | LoRA+OCFR ~90")
+    print(f"\n[done] BEST (val-selected, val-calibrated, reported on held-out TEST):")
+    print(f"  mA {mA*100:.2f}  Acc {acc*100:.2f}  Prec {prec*100:.2f}  Rec {rec*100:.2f}  F1 {f1*100:.2f}")
+    print("  baselines: zero-shot 69.47 | frozen linear 85.49")
 
 
 if __name__ == "__main__":
