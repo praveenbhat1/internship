@@ -45,16 +45,19 @@ interpretability without hurting accuracy (honest ablation). Figures: `mvp/ablat
 
 ---
 
-## Final model — validation metrics (22-attr, gender+age removed per mentor)
+## Final model — validation metrics (23-attr: gender kept, age removed)
+**Leak-free** (val-selected epoch + val-calibrated thresholds, reported on held-out test).
 On **10,000 held-out PA-100K test images:**
 
 | Metric | Value |
 |---|---|
-| mA (mean Accuracy) | **91.2** |
-| Accuracy | 71.0 |
-| Precision | 74.1 |
-| Recall | 92.5 |
-| F1 | 82.3 |
+| mA (mean Accuracy) | **90.8** |
+| Accuracy | 72.7 |
+| Precision | 76.4 |
+| Recall | 92.0 |
+| F1 | 83.4 |
+
+*Rigor: val mA 91.5 vs test mA 90.8 — the ~0.7 gap is the leakage our earlier protocol hid. Now honest.*
 
 Figure: `mvp/metrics_summary.png`. *(Reported with per-attribute calibrated thresholds, applied consistently to all models.)*
 

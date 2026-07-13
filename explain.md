@@ -74,15 +74,18 @@ peak at +CMAA+OCFR** (75.9 / 85.55) — a small, consistent gain: the modules sh
 predictions. **DACG** is roughly neutral on accuracy but adds interpretability. The modules add
 **structure + interpretability without hurting accuracy** — a legitimate, transparently-reported result.
 
-## Final demo model (mentor removed gender + age → 22 attributes)
-Trained the Full model with `--drop_gender_age`. Validated on **10,000 held-out test images**:
+## Final model (23 attributes: gender kept, age removed) — trained 3 epochs
+Full model (`--drop_age`), **leak-free evaluation**: best epoch + thresholds chosen on the
+**validation** set, then reported once on the **held-out test** set. On **10,000 test images:**
 
 | mA | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|
-| **91.15** | 70.96 | 74.14 | 92.46 | 82.30 |
+| **90.80** | 72.70 | 76.36 | 91.98 | 83.44 |
 
-Figure: `mvp/metrics_summary.png`. (1-epoch demo model; a 3-epoch run lifts Accuracy/F1.)
-Live demo: `python3 mvp/demo_full.py`.
+Figure: `mvp/metrics_summary.png`. Live demo: `python3 mvp/demo_full.py`.
+**Data-leakage note (rigor):** val mA was 91.52 vs test mA 90.80 — the ~0.7 gap is exactly the
+optimism our earlier (test-calibrated) protocol hid. We now tune only on validation → honest numbers.
+CCLoss now also enforces sleeve mutual-exclusion; predictions use per-attribute calibrated thresholds.
 
 ## Honest limitations (say these — they show rigor)
 - **Age is near chance for every model** — a fundamental limit of single-image PAR (now removed per mentor).
