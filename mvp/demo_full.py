@@ -50,6 +50,9 @@ AGE    = _idx(["AgeOver60", "Age18-60", "AgeLess18"])
 VIEW   = _idx(["Front", "Side", "Back"])
 SLEEVE = _idx(["ShortSleeve", "LongSleeve"])
 LOWER  = _idx(["Trousers", "Shorts", "Skirt&Dress"])   # lower-body garment: at most one
+FEMALE = NAMES.index("Female") if "Female" in NAMES else -1
+BACK   = NAMES.index("Back") if "Back" in NAMES else -1
+GENDER_CONF = 0.85     # only report gender when >=85% confident AND face is visible (else abstain)
 
 print(f"[load] {MODEL_ID} + {CKPT} on {DEVICE} | {N} attributes ...", flush=True)
 proc = AutoProcessor.from_pretrained(MODEL_ID)
@@ -127,6 +130,20 @@ def run(image):
     apply_exclusive(pred, probs, SLEEVE, False)
     apply_exclusive(pred, probs, LOWER, False)
 
+    # Gender: only report when confident AND the face is visible (not a back view) — else ABSTAIN.
+    gender_note = ""
+    if FEMALE >= 0:
+        is_back = BACK >= 0 and bool(VIEW) and VIEW[int(np.argmax(probs[VIEW]))] == BACK
+        pf = float(probs[FEMALE])
+        if is_back or (0.15 < pf < GENDER_CONF):
+            pred[FEMALE] = False
+            why = "back view (face not visible)" if is_back else f"only {pf*100:.0f}% confident"
+            gender_note = f"\n\n*Gender: **not reported** — {why} (model abstains when unsure).*"
+        elif pf >= GENDER_CONF:
+            gender_note = f"\n\n*Gender: **Female** ({pf*100:.0f}% confident).*"
+        else:
+            gender_note = f"\n\n*Gender: **Male** ({(1-pf)*100:.0f}% confident).*"
+
     # STEP 2 — CMAA heatmap for EVERY attribute (attribute-distinctive: subtract cross-attribute mean)
     gallery = []
     if cmaa_attn is not None:
@@ -160,7 +177,7 @@ def run(image):
     # STEP 5 — final prediction text (with confidence)
     det = [f"**{NAMES[j]}** ({probs[j]*100:.0f}%)" for j in np.argsort(-probs) if pred[j]]
     final = (f"### Step 5 — Final prediction ({N} attributes)\n**Detected:** " +
-             (", ".join(det) if det else "(none above threshold)"))
+             (", ".join(det) if det else "(none above threshold)") + gender_note)
     return "_feat.png", gallery, orient, dacg_img, final
 
 
