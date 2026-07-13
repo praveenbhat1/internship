@@ -87,6 +87,7 @@ def main():
     ap.add_argument("--attrs", default="features/attributes.json")
     ap.add_argument("--thresholds", default="features/thresholds.json")
     ap.add_argument("--batch", type=int, default=32); ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--tta", action="store_true", help="test-time augmentation (horizontal-flip averaging)")
     args = ap.parse_args()
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -137,6 +138,8 @@ def main():
         px = proc(images=pil, return_tensors="pt")["pixel_values"].to(device)
         with torch.no_grad():
             logits, _ = model(px)
+            if args.tta:                                     # average with horizontal flip (no labels used)
+                logits = (logits + model(torch.flip(px, dims=[3]))[0]) / 2
         p = torch.sigmoid(logits)[:, our_idx].float().cpu().numpy()
         pr = (p >= thr).astype(int); gr = np.array(gt_rows)
         preds.append(pr); gts.append(gr); done += len(pil)

@@ -40,15 +40,30 @@ def square_pad(img):
 
 
 class PARData(Dataset):
-    def __init__(self, names, labels, img_dir, proc):
+    def __init__(self, names, labels, img_dir, proc, augment=False):
         self.names, self.labels, self.img_dir, self.proc = names, labels, img_dir, proc
+        self.augment = augment
+        self.aug = self.erase = None
+        if augment:                                          # domain-generalizing augmentation (train only)
+            import torchvision.transforms as TT
+            self.aug = TT.Compose([
+                TT.RandomHorizontalFlip(),                   # safe: PA-100K has no left/right attributes
+                TT.ColorJitter(0.3, 0.3, 0.3, 0.05),         # reduce reliance on dataset-specific color/lighting
+                TT.RandomApply([TT.GaussianBlur(3)], p=0.2), # soften texture reliance
+            ])
+            self.erase = TT.RandomErasing(p=0.3)             # simulate occlusion
 
     def __len__(self):
         return len(self.names)
 
     def __getitem__(self, i):
         img = square_pad(Image.open(f"{self.img_dir}/{self.names[i]}"))
-        return self.proc(images=img, return_tensors="pt")["pixel_values"][0], torch.tensor(self.labels[i])
+        if self.aug is not None:
+            img = self.aug(img)
+        px = self.proc(images=img, return_tensors="pt")["pixel_values"][0]
+        if self.erase is not None:
+            px = self.erase(px)
+        return px, torch.tensor(self.labels[i])
 
 
 class FullPAR(nn.Module):
@@ -189,6 +204,8 @@ def main():
                     help="remove Female + the 3 Age labels -> 22 attributes")
     ap.add_argument("--drop_age", action="store_true",
                     help="remove only the 3 Age labels (keep Female) -> 23 attributes")
+    ap.add_argument("--augment", action="store_true",
+                    help="domain-generalizing augmentation on train (flip/jitter/blur/erase) -> better cross-dataset")
     args = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -238,8 +255,8 @@ def main():
         n, l = data[split]
         if lim and len(n) > lim:
             idx = np.random.RandomState(0).permutation(len(n))[:lim]; n = [n[i] for i in idx]; l = l[idx]
-        return DataLoader(PARData(n, l, args.img_dir, proc), batch_size=args.batch,
-                          shuffle=sh, num_workers=2), l
+        return DataLoader(PARData(n, l, args.img_dir, proc, augment=(split == "train" and args.augment)),
+                          batch_size=args.batch, shuffle=sh, num_workers=2), l
 
     trl, trlab = make("train", True, args.limit_train)
     vll, _ = make("val", False)                              # validation: for leak-free threshold tuning
