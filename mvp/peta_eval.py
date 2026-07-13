@@ -12,6 +12,9 @@ Run on Kaggle (PETA + par_full.pt there):
 import argparse, json, os, glob
 import numpy as np
 import torch
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 from PIL import Image
 from transformers import AutoModel, AutoProcessor
 from peft import LoraConfig, get_peft_model
@@ -118,7 +121,8 @@ def main():
     model.load_state_dict(torch.load(args.ckpt, map_location=device), strict=False)
     print("[model] ready\n")
 
-    preds, gts, done = [], [], 0
+    MN = [m[0] for m in matched]
+    preds, gts, done, examples = [], [], 0, []
     for i in range(0, len(samples), args.batch):
         chunk = samples[i:i + args.batch]
         pil, gt_rows = [], []
@@ -134,9 +138,36 @@ def main():
         with torch.no_grad():
             logits, _ = model(px)
         p = torch.sigmoid(logits)[:, our_idx].float().cpu().numpy()
-        preds.append((p >= thr).astype(int)); gts.append(np.array(gt_rows)); done += len(pil)
+        pr = (p >= thr).astype(int); gr = np.array(gt_rows)
+        preds.append(pr); gts.append(gr); done += len(pil)
+        for k in range(len(pil)):                            # keep a few examples for the figure
+            if len(examples) < 5:
+                examples.append((pil[k], pr[k], gr[k]))
         if i % (args.batch * 20) == 0:
             print(f"  processed {done}/{len(samples)}", flush=True)
+
+    # --- example figure: model prediction vs PETA ground truth ---
+    if examples:
+        fig, axes = plt.subplots(len(examples), 2, figsize=(9, 2.7 * len(examples)),
+                                 gridspec_kw={"width_ratios": [1, 2.2]})
+        if len(examples) == 1:
+            axes = axes[None, :]
+        for r, (pil, pr, gr) in enumerate(examples):
+            axes[r, 0].imshow(pil.resize((150, 300))); axes[r, 0].axis("off")
+            axes[r, 1].axis("off")
+            rows = []
+            for j, name in enumerate(MN):
+                if pr[j] or gr[j]:
+                    mark = "OK " if pr[j] == gr[j] else "X  "
+                    rows.append(f"{mark}{name:12s} model={'Yes' if pr[j] else 'No':3s}  PETA={'Yes' if gr[j] else 'No'}")
+            acc = (pr == gr).mean() * 100
+            axes[r, 1].text(0, 0.5, f"shared-attribute accuracy: {acc:.0f}%\n\n" + "\n".join(rows),
+                            fontsize=8.5, va="center", family="monospace")
+        fig.suptitle("Zero-shot on PETA (unseen dataset): model prediction vs PETA ground truth",
+                     fontweight="bold", y=1.0)
+        fig.tight_layout()
+        fig.savefig("peta_examples.png", dpi=140, bbox_inches="tight")
+        print("[saved] peta_examples.png")
 
     P, G = np.concatenate(preds), np.concatenate(gts)
     mA, acc, prec, rec, f1, per = par_metrics(P, G)
