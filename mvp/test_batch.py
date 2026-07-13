@@ -59,6 +59,7 @@ def main():
     if os.path.exists("features/thresholds.json"):
         _t = json.load(open("features/thresholds.json"))
         THRESH = np.array([_t.get(a, 0.5) for a in NAMES], dtype=np.float32)
+        THRESH = np.maximum(THRESH, 0.5)                     # floor: fewer false positives in display
 
     def _idx(names): return [NAMES.index(a) for a in names if a in NAMES]
     AGE, VIEW, SLEEVE = _idx(["AgeOver60", "Age18-60", "AgeLess18"]), _idx(["Front", "Side", "Back"]), _idx(["ShortSleeve", "LongSleeve"])

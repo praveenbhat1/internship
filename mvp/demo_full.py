@@ -39,6 +39,9 @@ THRESH = None
 if os.path.exists("features/thresholds.json"):
     _t = json.load(open("features/thresholds.json"))
     THRESH = np.array([_t.get(a, 0.5) for a in NAMES], dtype=np.float32)
+    # mA-calibrated thresholds can be very low for rare attributes -> false positives in the demo.
+    # Floor at 0.5 so the demo only shows attributes the model is genuinely confident about.
+    THRESH = np.maximum(THRESH, 0.5)
 
 # mutually-exclusive groups (only those that exist in this attribute set)
 def _idx(names):
