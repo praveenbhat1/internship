@@ -46,6 +46,7 @@ def _idx(names):
 AGE    = _idx(["AgeOver60", "Age18-60", "AgeLess18"])
 VIEW   = _idx(["Front", "Side", "Back"])
 SLEEVE = _idx(["ShortSleeve", "LongSleeve"])
+LOWER  = _idx(["Trousers", "Shorts", "Skirt&Dress"])   # lower-body garment: at most one
 
 print(f"[load] {MODEL_ID} + {CKPT} on {DEVICE} | {N} attributes ...", flush=True)
 proc = AutoProcessor.from_pretrained(MODEL_ID)
@@ -121,6 +122,7 @@ def run(image):
     apply_exclusive(pred, probs, AGE, True)
     apply_exclusive(pred, probs, VIEW, True)
     apply_exclusive(pred, probs, SLEEVE, False)
+    apply_exclusive(pred, probs, LOWER, False)
 
     # STEP 2 — CMAA heatmap for EVERY attribute (attribute-distinctive: subtract cross-attribute mean)
     gallery = []

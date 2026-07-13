@@ -62,6 +62,7 @@ def main():
 
     def _idx(names): return [NAMES.index(a) for a in names if a in NAMES]
     AGE, VIEW, SLEEVE = _idx(["AgeOver60", "Age18-60", "AgeLess18"]), _idx(["Front", "Side", "Back"]), _idx(["ShortSleeve", "LongSleeve"])
+    LOWER = _idx(["Trousers", "Shorts", "Skirt&Dress"])
 
     # ground truth (optional)
     gt_map = {}
@@ -102,6 +103,7 @@ def main():
         apply_exclusive(pred, probs, AGE, True)
         apply_exclusive(pred, probs, VIEW, True)
         apply_exclusive(pred, probs, SLEEVE, False)
+        apply_exclusive(pred, probs, LOWER, False)
         det = [f"{NAMES[j]}({probs[j]*100:.0f}%)" for j in np.argsort(-probs) if pred[j]]
         line = f"{fn:28s} -> " + ", ".join(det[:8])
         if fn in gt_map:
