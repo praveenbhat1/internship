@@ -35,7 +35,7 @@ ATTRIBUTE_MAP = {
     "UpperLogo":   ["upperBodyLogo"],
     "UpperPlaid":  ["upperBodyPlaid"],
     "UpperStride": ["upperBodyThinStripes", "upperBodyThickStripes"],
-    "Trousers":    ["lowerBodyTrousers"],
+    "Trousers":    ["lowerBodyTrousers", "lowerBodyJeans"],   # jeans are trousers (better cross-dataset alignment)
     "Shorts":      ["lowerBodyShorts"],
     "Skirt&Dress": ["lowerBodyShortSkirt", "lowerBodyLongSkirt"],
     "boots":       ["footwearBoots"],
