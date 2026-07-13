@@ -92,5 +92,18 @@ CCLoss now also enforces sleeve mutual-exclusion; predictions use per-attribute 
 - **On a strong backbone the modules add little raw accuracy** — their value is small F1 gains + interpretability.
 - **Training briefly diverged in fp16** — fixed with loss scaling + gradient clipping + best-checkpoint saving.
 
-## Still to come
-Cross-dataset validation on **PETA** (zero-shot PA-100K→PETA) → final slides/report.
+## Cross-dataset validation — PETA (zero-shot generalization)
+Ran the PA-100K-trained model on **PETA** (a different dataset), **no retraining**, scoring the
+**14 attributes** with a confident correspondence, on **14,437 images**:
+
+| | mA | Accuracy | Precision | Recall | F1 |
+|---|---|---|---|---|---|
+| In-domain (PA-100K) | 90.8 | 72.7 | 76.4 | 92.0 | 83.4 |
+| **Cross-domain (PETA)** | **77.75** | 58.07 | 62.43 | 87.94 | 73.02 |
+
+**Transfers well:** Shorts 94.8, ShortSleeve/LongSleeve 91.2, Female 88.4, Backpack 82.1.
+**Domain gap:** Trousers 56.5, UpperPlaid 46.4 (attribute definitions differ between datasets).
+Figures: `mvp/peta_comparison.png`, `mvp/peta_perattr.png`, `mvp/peta_examples.png`.
+
+**What it proves:** the ~13-point drop is the expected domain gap, but 77.75 mA is well above chance —
+the model learned **general** pedestrian features and generalizes to an unseen dataset without retraining.
