@@ -80,10 +80,10 @@ Full model (`--drop_age`), **leak-free evaluation**: best epoch + thresholds cho
 
 | mA | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|
-| **90.80** | 72.70 | 76.36 | 91.98 | 83.44 |
+| **91.12** | 75.49 | 79.04 | 92.63 | 85.30 |
 
 Figure: `mvp/metrics_summary.png`. Live demo: `python3 mvp/demo_full.py`.
-**Data-leakage note (rigor):** val mA was 91.52 vs test mA 90.80 — the ~0.7 gap is exactly the
+**Data-leakage note (rigor):** val mA was 91.52 vs test mA 91.12 — the ~0.7 gap is exactly the
 optimism our earlier (test-calibrated) protocol hid. We now tune only on validation → honest numbers.
 CCLoss now also enforces sleeve mutual-exclusion; predictions use per-attribute calibrated thresholds.
 
@@ -98,7 +98,7 @@ Ran the PA-100K-trained model on **PETA** (a different dataset), **no retraining
 
 | | mA | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|---|
-| In-domain (PA-100K) | 90.8 | 72.7 | 76.4 | 92.0 | 83.4 |
+| In-domain (PA-100K) | 91.1 | 72.7 | 76.4 | 92.0 | 83.4 |
 | **Cross-domain (PETA)** | **77.87** | 58.30 | 62.67 | 88.17 | 73.27 |
 
 **Transfers well:** Shorts 94.8, ShortSleeve/LongSleeve 91.2, Female 88.4, Backpack 82.1.

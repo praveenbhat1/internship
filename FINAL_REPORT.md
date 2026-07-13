@@ -98,7 +98,7 @@ relative; the final model below uses the leak-free protocol.)
 **Final model (23 attributes, leak-free, 10,000 test images)**
 | mA | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|
-| **90.80** | 72.70 | 76.36 | 91.98 | 83.44 |
+| **91.12** | 75.49 | 79.04 | 92.63 | 85.30 |
 
 ## 7. Cross-Dataset Generalization (PETA, zero-shot)
 The PA-100K-trained model was run on **PETA with no retraining**, scoring the **14 attributes** with
@@ -107,7 +107,7 @@ are excluded, for rigor). On **14,437 images:**
 
 | | mA | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|---|
-| In-domain (PA-100K) | 90.8 | 72.7 | 76.4 | 92.0 | 83.4 |
+| In-domain (PA-100K) | 91.1 | 72.7 | 76.4 | 92.0 | 83.4 |
 | **Cross-domain (PETA)** | **77.87** | 58.30 | 62.67 | 88.17 | 73.27 |
 
 **Transfers well:** Shorts 94.8, ShortSleeve/LongSleeve 91.2, Female 88.4, Backpack 82.1.

@@ -1,10 +1,10 @@
 {
-  "mA": 90.80,
-  "Accuracy": 72.70,
-  "Precision": 76.36,
-  "Recall": 91.98,
-  "F1": 83.44,
+  "mA": 91.12,
+  "Accuracy": 75.49,
+  "Precision": 79.04,
+  "Recall": 92.63,
+  "F1": 85.30,
   "n_test": 10000,
-  "model": "Full 23-attr (CMAA+OCFR+DACG+CCLoss, 3 epochs)",
+  "model": "Full 23-attr (CMAA+OCFR+DACG+CCLoss, 3 epochs + augmentation)",
   "note": "Leak-free: val-selected epoch, val-calibrated thresholds, reported on held-out test."
 }
