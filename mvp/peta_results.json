@@ -1,0 +1,41 @@
+{
+  "n_images": 14437,
+  "n_attrs": 14,
+  "attrs": [
+    "Female",
+    "Hat",
+    "Glasses",
+    "Backpack",
+    "ShoulderBag",
+    "ShortSleeve",
+    "LongSleeve",
+    "UpperLogo",
+    "UpperPlaid",
+    "UpperStride",
+    "Trousers",
+    "Shorts",
+    "Skirt&Dress",
+    "boots"
+  ],
+  "mA": 77.75,
+  "Accuracy": 58.07,
+  "Precision": 62.43,
+  "Recall": 87.94,
+  "F1": 73.02,
+  "per_attr_mA": {
+    "Female": 88.4,
+    "Hat": 76.5,
+    "Glasses": 66.5,
+    "Backpack": 82.1,
+    "ShoulderBag": 77.5,
+    "ShortSleeve": 91.2,
+    "LongSleeve": 91.2,
+    "UpperLogo": 75.4,
+    "UpperPlaid": 46.4,
+    "UpperStride": 85.7,
+    "Trousers": 56.5,
+    "Shorts": 94.8,
+    "Skirt&Dress": 77.1,
+    "boots": 79.1
+  }
+}
