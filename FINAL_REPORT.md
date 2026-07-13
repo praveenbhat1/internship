@@ -10,7 +10,7 @@ Cross-Modal Attribute Attention (CMAA), Orientation-Conditioned Feature Routing 
 Dynamic Attribute Correlation Graph (DACG), and a Consistency Loss (CCLoss). Trained on PA-100K,
 the model reaches **90.8% mean accuracy (mA)** on the held-out test set under a **leak-free**
 evaluation protocol. An incremental ablation isolates each module's contribution, and a
-**zero-shot cross-dataset study on PETA (14,437 images) reaches 77.87% mA with no retraining**,
+**zero-shot cross-dataset study on PETA (14,437 images) reaches 77.81% mA with no retraining**,
 demonstrating that the model learns generalizable pedestrian features. We report all results
 transparently, including a data-leakage issue we found and fixed, and we design the system to
 **abstain on gender** when it cannot see the face — a responsible-AI choice.
@@ -108,12 +108,12 @@ are excluded, for rigor). On **14,437 images:**
 | | mA | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|---|
 | In-domain (PA-100K) | 91.1 | 72.7 | 76.4 | 92.0 | 83.4 |
-| **Cross-domain (PETA)** | **77.87** | 58.30 | 62.67 | 88.17 | 73.27 |
+| **Cross-domain (PETA)** | **77.81** | 56.96 | 61.34 | 87.90 | 72.26 |
 
 **Transfers well:** Shorts 94.8, ShortSleeve/LongSleeve 91.2, Female 88.4, Backpack 82.1.
 **Domain gap:** Trousers 56.5, UpperPlaid 46.4 (attribute definitions differ between datasets).
 
-The ~13-point drop is the **expected domain gap**, but 77.87 mA is well above chance — evidence that
+The ~13-point drop is the **expected domain gap**, but 77.81 mA is well above chance — evidence that
 the model learned **general** pedestrian features and would transfer to real deployment on unseen data.
 
 ## 8. Interpretability & Responsible Design
@@ -135,7 +135,7 @@ the final predictions with **per-attribute confidence**. Design choices for trus
 - **Cross-dataset attributes with different definitions** (e.g., Trousers) show a larger gap.
 
 ## 10. Conclusion & Future Work
-We built an interpretable, viewpoint-aware PAR model reaching **90.8% mA** in-domain and **77.87%
+We built an interpretable, viewpoint-aware PAR model reaching **90.8% mA** in-domain and **77.81%
 mA zero-shot on PETA**, with an honest ablation and a fixed data-leakage protocol. Future work:
 recalibrate thresholds for F1 (fewer false positives), redo the full ablation under the leak-free
 protocol, and extend the cross-dataset study to more datasets.

@@ -99,11 +99,11 @@ Ran the PA-100K-trained model on **PETA** (a different dataset), **no retraining
 | | mA | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|---|
 | In-domain (PA-100K) | 91.1 | 72.7 | 76.4 | 92.0 | 83.4 |
-| **Cross-domain (PETA)** | **77.87** | 58.30 | 62.67 | 88.17 | 73.27 |
+| **Cross-domain (PETA)** | **77.81** | 56.96 | 61.34 | 87.90 | 72.26 |
 
 **Transfers well:** Shorts 94.8, ShortSleeve/LongSleeve 91.2, Female 88.4, Backpack 82.1.
 **Domain gap:** Trousers 56.5, UpperPlaid 46.4 (attribute definitions differ between datasets).
 Figures: `mvp/peta_comparison.png`, `mvp/peta_perattr.png`, `mvp/peta_examples.png`.
 
-**What it proves:** the ~13-point drop is the expected domain gap, but 77.87 mA is well above chance —
+**What it proves:** the ~13-point drop is the expected domain gap, but 77.81 mA is well above chance —
 the model learned **general** pedestrian features and generalizes to an unseen dataset without retraining.
