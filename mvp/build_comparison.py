@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 methods = ["DeepMAR\n2015", "HP-Net\n2017", "VAC\n2019", "ALM\n2019",
-           "JLAC\n2020", "VTB\n2022", "PARFormer\n2023", "Ours\nSigLIP-2+LoRA"]
+           "JLAC\n2020", "VTB\n2022", "PARFormer\n2023", "Ours\n(full model)"]
 mA = [72.7, 74.2, 79.2, 80.7, 82.3, 83.7, 84.5, 91.1]
 colors = ["#9bb7d4"] * 7 + ["#e67e22"]
 

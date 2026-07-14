@@ -10,7 +10,7 @@
 | JLAC | 2020 | ResNet-50 | 82.3 |
 | VTB | 2022 | ViT-B | 83.7 |
 | PARFormer | 2023 | Transformer | ~84.5 |
-| **Ours** | 2026 | **SigLIP-2 + LoRA** | **~91** |
+| **Ours (full model)** | 2026 | **SigLIP-2 + LoRA + CMAA + OCFR + DACG + CCLoss** | **~91** |
 
 > ⚠️ Prior numbers are **commonly-cited approximate values** from the papers / the PAR survey
 > (Wang et al., 2022). **Verify exact figures from the original papers** before submitting.
