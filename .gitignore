@@ -21,3 +21,6 @@ mvp/proof_sheet.png
 
 # Gradio runtime
 mvp/.gradio/
+
+# Generated slides
+slides.pdf
