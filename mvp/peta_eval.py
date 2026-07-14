@@ -42,6 +42,11 @@ ATTRIBUTE_MAP = {
 }
 IMG_EXT = ("*.png", "*.bmp", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.BMP")
 
+# PA-100K positive rates (from the PA-100K test labels) — used ONLY for --prior_match (no PETA labels).
+PRIORS = {"Female": 0.390, "Hat": 0.029, "Glasses": 0.246, "Backpack": 0.152, "ShoulderBag": 0.196,
+          "ShortSleeve": 0.441, "LongSleeve": 0.559, "UpperLogo": 0.124, "UpperPlaid": 0.122,
+          "UpperStride": 0.064, "Trousers": 0.786, "Shorts": 0.129, "Skirt&Dress": 0.082, "boots": 0.006}
+
 
 def par_metrics(pred, gt):
     e = 1e-12
@@ -88,6 +93,8 @@ def main():
     ap.add_argument("--thresholds", default="features/thresholds.json")
     ap.add_argument("--batch", type=int, default=32); ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--tta", action="store_true", help="test-time augmentation (horizontal-flip averaging)")
+    ap.add_argument("--prior_match", action="store_true",
+                    help="label-free domain adaptation: set thresholds so PETA positive-rate matches PA-100K priors")
     args = ap.parse_args()
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -123,7 +130,7 @@ def main():
     print("[model] ready\n")
 
     MN = [m[0] for m in matched]
-    preds, gts, done, examples = [], [], 0, []
+    Praw, gts, done, ex_imgs = [], [], 0, []
     for i in range(0, len(samples), args.batch):
         chunk = samples[i:i + args.batch]
         pil, gt_rows = [], []
@@ -141,22 +148,29 @@ def main():
             if args.tta:                                     # average with horizontal flip (no labels used)
                 logits = (logits + model(torch.flip(px, dims=[3]))[0]) / 2
         p = torch.sigmoid(logits)[:, our_idx].float().cpu().numpy()
-        pr = (p >= thr).astype(int); gr = np.array(gt_rows)
-        preds.append(pr); gts.append(gr); done += len(pil)
-        for k in range(len(pil)):                            # keep a few examples for the figure
-            if len(examples) < 5:
-                examples.append((pil[k], pr[k], gr[k]))
+        Praw.append(p); gts.append(np.array(gt_rows)); done += len(pil)
+        for k in range(len(pil)):
+            if len(ex_imgs) < 5:
+                ex_imgs.append(pil[k])
         if i % (args.batch * 20) == 0:
             print(f"  processed {done}/{len(samples)}", flush=True)
 
+    P_all = np.concatenate(Praw); G = np.concatenate(gts)
+    # --- per-attribute thresholds: prior-match (label-free) or the PA-100K-calibrated ones ---
+    if args.prior_match:                                     # set threshold so PETA positive-rate == PA-100K prior
+        thr = np.array([np.quantile(P_all[:, j], 1.0 - PRIORS.get(MN[j], 0.5)) for j in range(len(MN))])
+        print("[prior-match] thresholds set to match PA-100K positive rates (no PETA labels used)")
+    pred = (P_all >= thr).astype(int)
+
     # --- example figure: model prediction vs PETA ground truth ---
-    if examples:
+    if ex_imgs:
+        examples = [(ex_imgs[k], pred[k], G[k]) for k in range(len(ex_imgs))]
         fig, axes = plt.subplots(len(examples), 2, figsize=(9, 2.7 * len(examples)),
                                  gridspec_kw={"width_ratios": [1, 2.2]})
         if len(examples) == 1:
             axes = axes[None, :]
-        for r, (pil, pr, gr) in enumerate(examples):
-            axes[r, 0].imshow(pil.resize((150, 300))); axes[r, 0].axis("off")
+        for r, (pim, pr, gr) in enumerate(examples):
+            axes[r, 0].imshow(pim.resize((150, 300))); axes[r, 0].axis("off")
             axes[r, 1].axis("off")
             rows = []
             for j, name in enumerate(MN):
@@ -172,8 +186,7 @@ def main():
         fig.savefig("peta_examples.png", dpi=140, bbox_inches="tight")
         print("[saved] peta_examples.png")
 
-    P, G = np.concatenate(preds), np.concatenate(gts)
-    mA, acc, prec, rec, f1, per = par_metrics(P, G)
+    mA, acc, prec, rec, f1, per = par_metrics(pred, G)
     print("\n" + "=" * 62)
     print(f"ZERO-SHOT  PA-100K -> PETA   ({done} images, {len(matched)} shared attributes)")
     print("=" * 62)
