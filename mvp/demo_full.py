@@ -114,12 +114,15 @@ def run(image):
     tv = torch.nn.functional.normalize(model.text_emb.float(), dim=-1)
     sim = (pv @ tv.t())[0].cpu().numpy()
     top = np.argsort(-sim)[:10]
-    fig, (a1, a2) = plt.subplots(2, 1, figsize=(8, 4.8))
+    fig, (a1, a2) = plt.subplots(2, 1, figsize=(8, 5.0))
     a1.bar(range(len(vec)), vec, width=1.0, color="#1a73e8")
     a1.set_title(f"Step 1a - SigLIP-2 VISUAL FEATURE: image -> {len(vec)} numbers")
-    a1.set_xlabel("feature dimension")
+    a1.set_xlabel("feature dimension (index 0-%d)" % (len(vec) - 1))
+    a1.set_ylabel("feature value\n(activation strength)")
     a2.barh([NAMES[j] for j in top][::-1], sim[top][::-1], color="#8e44ad")
     a2.set_title("Step 1b - PLAIN SigLIP image<->attribute-text match (before any module)")
+    a2.set_xlabel("match score  (image-text cosine similarity; higher = better match)")
+    a2.set_ylabel("attribute")
     fig.tight_layout(); fig.savefig("_feat.png", dpi=110); plt.close(fig)
 
     # STEP 5 (compute first so heatmap labels can show YES/NO) — thresholds + mutual exclusion
