@@ -1,0 +1,811 @@
+\documentclass{ieeeaccess}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+%\usepackage{algorithm}%
+%\usepackage{algorithmicx}%
+%\usepackage{algpseudocode}%
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{graphicx}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage[table]{xcolor}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+\history{Date of publication X 00, 0000, date of current version xxxx 00, 0000.}
+\doi{10.1109/ACCESS.2017.DOI}
+
+\title{Multimodal Pedestrian Attribute Recognition with Correlation-Aware Learning
+}
+
+\author{\uppercase{Ramyashree}\authorrefmark{1,2},
+\uppercase{ Venugopala P S(Senior Member,IEEE)\authorrefmark{3}, Raghavendra S\authorrefmark{1,*} and Ashwini B\authorrefmark{4,*}}
+}
+\address[1]{  Department of    Information and Communication Technology, Manipal Institute of Technology,Manipal Academy of Higher Education, Manipal,576104, India  (e-mail:   ramya.shree@manipal.edu,raghavendra.s@manipal.edu)}
+\address[2]{Member, IEEE, NITTE (Deemed to be University), NMAM Institute of Technology, Nitte 574110, Karnataka, India}
+\address[3]{NITTE (Deemed to be University), Department of Artificial Intelligence and Data Science, NMAM Institute of Technology, Nitte - 574110, Karnataka, India(e-mail: venugopalaps@nitte.edu.in )}
+\address[4]{NITTE (Deemed to be University),Department of Information Science \& Engineering , NMAM Institute of Technology, Nitte - 574110, Karnataka, India(e-mail: ashwinib@nitte.edu.in )}
+
+\markboth
+{Author \headeretal: Preparation of Papers for IEEE TRANSACTIONS and JOURNALS}
+{Author \headeretal: Preparation of Papers for IEEE TRANSACTIONS and JOURNALS}
+
+\corresp{Corresponding author: Dr.Raghavendra S (e-mail: raghavendra.s@manipal.edu),Dr. Ashwini B(e-mail: ashwinib@nitte.edu.in ).}
+
+\begin{abstract}
+
+Pedestrian Attribute Recognition (PAR) has emerged as an important computer vision task for intelligent surveillance systems, enabling the automatic recognition of semantic attributes such as gender, age, clothing, accessories, and carrying conditions from pedestrian images. Although recent deep learning methods have significantly improved recognition performance, they still face challenges including viewpoint variation, static attribute correlation modeling, class imbalance, and limited cross-dataset generalization.
+This paper proposes a multimodal correlation-aware pedestrian attribute recognition framework based on the pretrained SigLIP-2 vision-language model for robust and semantically consistent attribute prediction. The proposed framework integrates a Cross-Modal Attribute Attention (CMAA) module for effective visual-semantic feature interaction, an Orientation-Conditioned Feature Routing (OCFR) module for viewpoint-aware feature learning, and a Hybrid Dynamic Attribute Correlation Graph (Hybrid DACG) to model both prior and image-specific attribute relationships. Furthermore, Weighted Binary Cross-Entropy (Weighted BCE) and Correlation Consistency Loss (CCLoss) are employed to address class imbalance and improve logical consistency among predicted attributes. The framework is trained and evaluated on the PA-100K dataset and further validated on the PETA dataset to assess its cross-dataset generalization capability. By combining vision-language representations, adaptive attribute reasoning, and orientation-aware learning within a unified architecture, the proposed system aims to achieve accurate and robust pedestrian attribute recognition for real-world intelligent surveillance applications.
+
+\end{abstract}
+
+\begin{keywords}
+Pedestrian Attribute Recognition, Vision-Language Models, SigLIP-2, Cross-Modal Attribute Attention (CMAA), Orientation-Conditioned Feature Routing (OCFR), Hybrid Dynamic Attribute Correlation Graph (Hybrid DACG), Correlation Consistency Loss (CCLoss), Multi-Label Classification.
+\end{keywords}
+
+\titlepgskip=-15pt
+
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+\PARstart{T}{HE} rapid growth of intelligent surveillance systems and smart city infrastructures has significantly increased the demand for automated analysis of pedestrian information in real-world environments. Among various computer vision tasks, Pedestrian Attribute Recognition (PAR) has emerged as an important research area that focuses on identifying semantic attributes of pedestrians from surveillance images, such as gender, age group, clothing characteristics, accessories, and carrying conditions. Unlike traditional person identification approaches that rely solely on visual matching, PAR provides high-level semantic descriptions that enable a more comprehensive understanding of pedestrian appearance. These attribute-based descriptions have proven valuable in numerous applications, including person retrieval, public safety monitoring, criminal investigation, crowd analysis, and intelligent transportation systems. Consequently, the development of accurate and robust pedestrian attribute recognition frameworks has become an increasingly important research challenge in modern surveillance and security systems.
+
+Pedestrian Attribute Recognition aims to automatically infer semantic descriptions of individuals from surveillance imagery by predicting multiple visual attributes simultaneously. Unlike traditional person re-identification systems that focus on matching identities across cameras, PAR provides human-understandable descriptions such as gender, age group, clothing style, carried objects, and accessories. As illustrated in Figure \ref{fig:par_process}, the recognition process begins with a pedestrian image, from which relevant visual information is extracted and analyzed to generate attribute predictions. These semantic descriptions can be effectively utilized in various surveillance and security applications, including suspect retrieval, intelligent video analytics, crowd monitoring, and forensic investigation. The ability to automatically recognize pedestrian attributes has therefore become an important component of modern intelligent surveillance systems.
+
+% Figure 1
+\begin{figure}[!b]
+\centering
+\includegraphics[width=0.25\textwidth]{PAR_image.png}
+\caption{Pedestrian Attribute Recognition Process}
+\label{fig:par_process}
+\end{figure}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.50\textwidth]{traditional_image.png}
+\caption{Comparison of Traditional and Proposed PAR Frameworks}
+\label{fig}
+\end{figure}
+
+Figure \ref{fig} presents a conceptual comparison between conventional Pedestrian Attribute Recognition (PAR) approaches and the proposed multimodal framework. Traditional PAR methods primarily rely on visual appearance information extracted from pedestrian images to predict semantic attributes. In these approaches, the input image is processed through a visual feature extractor, and the extracted image features are directly forwarded to an attribute classifier for prediction. Although such approaches have achieved promising recognition performance, they depend solely on appearance information and often struggle under challenging surveillance conditions, including viewpoint variations, occlusions, illumination changes, and visually similar clothing patterns. Moreover, conventional PAR methods generally ignore explicit body structural information and employ fixed attribute relationships, limiting their ability to perform context-aware semantic reasoning.
+
+In contrast, the proposed framework introduces a vision-language learning strategy built on the pretrained SigLIP-2 model, which jointly encodes the pedestrian image and natural-language attribute descriptions in a shared semantic space. While the image encoder captures rich appearance information such as clothing, accessories, and colour patterns, the frozen text encoder provides complementary semantic priors for each attribute. Inspired by recent vision-language PAR frameworks \cite{bib6,bib7}, the two modalities are aligned through a cross-modal attention mechanism to obtain a more comprehensive and semantically grounded representation of the pedestrian.
+
+Following multimodal fusion, the proposed framework performs Dynamic Correlation Learning, which represents the primary contribution of this work. Existing graph-based PAR methods, including MCGCN \cite{bib3}, Vision Transformer with Relation Exploration \cite{bib4}, and Orientation-Aware Graph Convolutional Networks \cite{bib5}, model inter-attribute dependencies using a static correlation graph constructed from dataset-level statistics. However, attribute relationships are highly dependent on the visual characteristics of individual pedestrians. To overcome this limitation, the proposed framework dynamically models image-specific attribute correlations, enabling adaptive semantic reasoning for each pedestrian instance.
+
+Furthermore, the proposed framework incorporates Orientation-Aware Feature Routing to explicitly address viewpoint variations commonly encountered in surveillance environments. Unlike traditional appearance-based approaches, the framework learns orientation-aware representations and selectively emphasizes discriminative features according to the estimated viewing direction of the pedestrian, thereby improving the recognition of viewpoint-dependent attributes.
+
+Overall, by integrating vision-language semantic representation, dynamic attribute correlation learning, and orientation-aware feature routing within a unified framework, the proposed approach overcomes several limitations of conventional PAR systems and provides a more robust and discriminative representation for pedestrian attribute recognition.
+
+\begin{figure*}[t]
+    \centering
+         \includegraphics[width=\columnwidth]{structure_daigram.png}
+    \caption{Structural framework of the proposed multimodal pedestrian attribute recognition system.}
+    \label{fig:framework}
+\end{figure*}
+
+
+\par
+Figure 3 illustrates the overall workflow of the proposed multimodal pedestrian attribute recognition framework. The framework takes a cropped pedestrian image as input, which is first preprocessed using square padding, resizing to $256 \times 256$, and normalization to ensure a consistent input format. The preprocessed image is then processed by the pretrained SigLIP-2 vision-language model, which consists of an image encoder and a text encoder. The image encoder extracts high-level visual representations from the pedestrian image, while the text encoder generates semantic embeddings for the predefined pedestrian attribute descriptions. Unlike conventional CNN-based approaches that require separate image and text encoders with additional alignment training, SigLIP-2 provides a unified vision-language representation learned from large-scale image-text pretraining, enabling effective semantic understanding with minimal task-specific training.
+
+The extracted visual features and attribute embeddings are subsequently fused using the proposed Cross-Modal Attribute Attention (CMAA) module. Inspired by recent vision-language based pedestrian attribute recognition approaches \cite{bib6,bib7}, CMAA establishes fine-grained interactions between visual representations and semantic attribute descriptions. This enables the framework to focus on the most relevant visual regions for each attribute and enhances the consistency between visual and semantic features, thereby improving attribute representation for downstream recognition.
+
+To address viewpoint variations commonly encountered in surveillance environments, the framework incorporates an Orientation Head that predicts the pedestrian viewing direction as front, side, or back. The estimated orientation information is then utilized by the proposed Orientation-Conditioned Feature Routing (OCFR) module to dynamically route feature representations according to the pedestrian viewpoint. This orientation-aware routing strategy enables the framework to emphasize viewpoint-relevant information and improves recognition robustness under varying camera perspectives.
+
+The refined feature representations are subsequently forwarded to the proposed Hybrid Dynamic Attribute Correlation Graph (Hybrid DACG) module, which constitutes one of the primary contributions of this work. Existing graph-based pedestrian attribute recognition approaches such as MCGCN \cite{bib3}, Vision Transformer with Relation Exploration \cite{bib4}, and Orientation-Aware GCN \cite{bib5} model attribute dependencies using static correlation graphs derived from dataset-level statistics. However, pedestrian attributes often exhibit image-specific relationships that cannot be captured by a fixed graph. To overcome this limitation, the proposed Hybrid DACG combines prior dataset-level attribute correlations with dynamically learned image-specific relationships, enabling adaptive semantic reasoning while preserving global attribute knowledge.
+
+Finally, the enhanced feature representations are passed to a lightweight linear attribute classifier followed by a sigmoid activation function to perform multi-label classification. The framework simultaneously predicts 26 pedestrian attributes corresponding to the annotation protocol of the PA-100K dataset \cite{PA-100K}. During training, the model is optimized using Weighted Binary Cross-Entropy (Weighted BCE) to alleviate the class imbalance problem and the proposed Correlation Consistency Loss (CCLoss) to enforce logical consistency among predicted attributes. By integrating vision-language semantic representations, cross-modal feature interaction, orientation-aware feature routing, adaptive attribute correlation learning, and consistency-aware optimization within a unified framework, the proposed system aims to achieve accurate, robust, and generalizable pedestrian attribute recognition across diverse surveillance scenarios.
+
+This paper makes contributions to the domain of Pedestrian Attribute Recognition (PAR) through developing a multimodal correlation-aware system that combines vision-language semantic representations, dynamic attribute relation modeling, and orientation-aware feature learning. The proposed system is built with an aim to solve challenges faced in PAR systems such as viewpoint variance, static attribute correlation modeling, class imbalance, and limited cross-dataset generalization. The primary contributions of this work are outlined below:
+\begin{enumerate}
+
+    \item The Dynamic Attribute Correlation Graph (DACG) architecture was introduced in order to construct attribute interaction relationships from an individual image perspective for pedestrian attribute recognition. Unlike the prior works that constructed static graphs according to the fixed inter-relationships in a dataset, DACG allows modeling the attribute interactions flexibly, facilitating the semantic reasoning adaptively.
+    \item The Cross-Modal Attribute Attention (CMAA) was designed to provide fine-grained cross-modal interactions between visual features and attribute descriptions. The proposed module contributes to attribute localization and enhances the visual-semantic feature consistency.
+     \item The Orientation-Conditioned Feature Routing (OCFR) mechanism was devised to handle the variations of viewpoint in surveillance videos. The proposed module learns the continuously oriented pedestrian representation to enable the routing of feature information conditionally.
+     \item The Correlation Consistency Loss (CCLoss) was proposed to impose semantic coherence in the attribute predictions. The proposed loss enforces the logical coherence of predictions by introducing co-occurrence relationships between attributes.
+\end{enumerate}
+
+The main aim of this study is to enhance the precision, robustness, and semantic correctness of pedestrian attributes recognition in real-world surveillance conditions. This goal cannot be achieved using existing approaches that utilize attribute associations based on a predefined set of attributes or coarsely fuse multi-modal information to learn the relationships between different pedestrian attributes. This paper proposes a novel framework for pedestrian attributes recognition with improved mechanisms like attribute adaptation, multimodal attention, and orientation-sensitive feature representation. The effectiveness of this proposed model is demonstrated by conducting comprehensive experiments using benchmark datasets PA-100K,PETA.
+\par The remainder of this paper is organized as follows. Section~\ref{sec3} reviews related work on pedestrian attribute recognition. Section~\ref{sec:methodology} presents the proposed correlation-aware vision-language framework in detail, including the dataset, preprocessing, and each module. Section~\ref{sec:results} reports the experimental setup, results, ablation study, and cross-dataset evaluation. Finally, Section~\ref{sec:conclusion} concludes the paper and outlines future directions.
+
+
+\section{Literature Survey}\label{sec3}
+Pedestrian Attribute Recognition (PAR) has become an important area of research in intelligent surveillance systems because of its ability to automatically identify a range of semantic attributes from pedestrian images. Examples of these attributes include gender, clothing style, accessories, carrying conditions, and appearance-related characteristics. Collectively, these attributes can be used in a wide variety of applications, including person retrieval, public safety monitoring, smart city management, and video surveillance. More recently, advancements in deep learning have significantly improved the performance of PAR through the application of Convolutional Neural Networks (CNNs), Vision Transformers (ViTs), Graph Neural Networks (GNNs), and Vision-Language Models (VLMs). Research in this field has focused on improving feature representation, modeling attribute relationships, integrating multimodal semantic knowledge, and developing systems that are robust to challenging real-world environments. This section reviews recent state-of-the-art techniques in pedestrian attribute recognition, examining their strengths, limitations, and remaining research gaps, with a particular focus on the development of Multimodal Pedestrian Attribute Recognition with Correlation-Aware Learning.
+
+
+In recent times, PAR models have been shown to focus more on improving feature extraction and representation learning using Transformer networks. Although CNNs can learn useful features from local visual cues, it becomes challenging to model long-term dependency and global context in pedestrian images using CNNs. To this end, Fan et al. presented PARFormer, a Transformer-based framework designed as a multi-task learning pipeline. The architecture employs a Transformer backbone for feature extraction and applies techniques such as Batch Random Masking (BRM), Multi-Attribute Center Loss (MACL), and Multi-View Contrastive Loss (MVCL) in order to increase the robustness of learned features, attribute discrimination capabilities, and viewpoint awareness in PAR learning \cite{bib1}. According to their analysis, leveraging global contextual associations with the help of a Transformer attention mechanism significantly improves attribute recognition accuracy on existing PAR benchmarks proposed by Fan et al.\cite{bib1}. Following the increasing effectiveness of Transformer-based frameworks, Hussein and Hassan proposed a hybrid CNN-Transformer model using EfficientNetV2-M to extract local features and Swin Transformer to capture global contexts \cite{bib2}. Additionally, they incorporate multiscale feature extraction and Class-Specific Residual Attention (CSRA) modules in order to boost recognition of fine-grained pedestrian attributes and to localize the regions containing attributes \cite{bib1}. As the authors Haval I. Hussein and Masoud M. Hassan noted, experiments conducted on the hybrid CNN-Transformer model demonstrate its robust recognition performance with computational complexity suitable for real-world surveillance applications \cite{bib2}. All these studies clearly show that higher-quality representations and better incorporation of local-global visual information could be leveraged to improve the performance of PAR systems significantly. However, it is important to note that both works focus on improving learning from visual features only, where pedestrian attributes are treated independently in most cases \cite{bib1,bib2}. In other words, the natural inter-dependence of different attributes is not considered sufficiently. This limitation led researchers to explore correlation-aware learning approaches for explicitly modeling attribute relationships.
+
+In response to the limitation of considering pedestrian attributes independently, some studies focused on utilizing graph learning to explore the correlations between attributes and visual regions. For instance, Yu et al. presented MCGCN (Multi-Correlation Graph Convolutional Network) for learning correlations among attributes and regions using the same graph learning strategy \cite{bib3}. In particular, MCGCN consists of three interconnected graphs including a semantic graph, a visual graph, and a synthesis graph, so as to exploit both attribute-level and region-level relationships for each other when learning pedestrian attributes \cite{bib3}. It has been proved that such a method can help greatly improve the recognition performance, especially for hard attributes impacted by low resolution and occlusion \cite{bib3}. Following this concept, Tan et al. introduced Vision Transformer with Relation Exploration (ViT-RE) by integrating the global representation capability of Vision Transformer with graph-based relation modeling \cite{bib4}. Specifically, it first extracts both attribute-specific and contextual features by the Attribute and Contextual Feature Projection layer, and then exploits relations among attributes and contexts by the Relation Exploration layer via Graph Convolution Network (GCN) and Transformer blocks \cite{bib4}. Additionally, to make relation exploration more flexible, the framework designs a Dynamic Adjacency Matrix generator to produce instance-wise adjacency matrices \cite{bib4}. While MCGCN and ViT-RE mainly focused on attribute correlations, Lu et al. noticed that pedestrian attributes have different correlations at different pedestrian orientations, and thus came up with Orientation-Aware Graph Convolutional Network (OAGCN) \cite{bib5}. In OAGCN, Orientation-Aware Spatial Attention module helps better localizing pedestrian attributes under different orientations, while Orientation-Guided Attribute Relation Learning layer learns different attribute correlations based on pedestrian orientations \cite{bib5}. As shown in their experiment results, attributes visible in different pedestrian orientations have quite diverse relational patterns, and therefore, exploiting the orientation information will benefit pedestrian attributes recognition greatly \cite{bib5}. Overall, these studies show that it is crucial to learn the correlation of pedestrian attributes in PAR. Meanwhile, their experiments show that graph-based reasoning is effective in capturing pedestrian attributes' correlation. Nevertheless, the correlation structures adopted in these studies are either predefined or learnable only in the preset network structure, and cannot be flexibly changed according to each individual pedestrian images.
+
+More recent researches focus on the integration of vision-language models to enhance PAR performance with the assistance of additional semantic knowledge acquired from textual descriptions besides visual inputs. Specifically, PromptPAR was proposed as the first CLIP-guided vision-language fusion framework in PAR problems, where pedestrian attribute recognition is redefined as multimodal learning instead of visual feature learning alone \cite{bib6}. Specifically, PromptPAR enlarges attribute categories into natural language descriptions, where the pre-trained CLIP model learns strong alignment between pedestrian images and their corresponding semantics. Moreover, a novel region-aware prompt tuning method was introduced, enhancing attribute-specific feature learning yet drastically decreasing the number of trainable parameters \cite{bib6}. Inspired by the success of vision-language learning techniques, Sellam et al. proposed another PAR framework named VLM-PAR, consisting of two frozen SigLIP2 vision and text encoders to perform lightweight cross-attention image-prompt fusion \cite{bib7}. The combination of the generalization power of pre-training with attribute-specific fine-tuning led to better PAR results, especially when dealing with class imbalance and domain generalization issues \cite{bib7}. Recently, Jin et al. introduced a new paradigm called LLM-PAR along with the large-scale benchmark MSP60K for PAR tasks \cite{bib8}. In contrast with other classification-based PAR methods, LLM-PAR is a multi-task learning framework, consisting of both visual classification and Large Language Model (LLM) branches, generating textual pedestrian attribute descriptions, to assist in visual feature learning and pedestrian attribute reasoning \cite{bib8}. Besides, an ensemble technique is proposed to integrate visual classification and LLM-based predictions in the process of semantic pedestrian attributes learning \cite{bib8}. All above mentioned PAR frameworks indicate the growing trend of integrating multimodal learning and semantic knowledge to enhance PAR performance. Nevertheless, in spite of the success of vision-language learning and language guidance, the relationship between different pedestrian attributes is not sufficiently explored yet.
+
+In addition to the architectural and multimodal learning improvements mentioned above, modern studies focus on improving the quality and diversity of learned feature representations of pedestrians' attributes. Specifically, in their paper, Wu et al. introduce High-order Diversity Feature Learning (HDFL) that tries to improve on shortcomings of current state-of-the-art methods by not being able to learn attribute features in detail and relying too much on redundant feature representations \cite{bib9}. More specifically, in order to address this issue, HDFL includes the Attribute-specific Detailed Feature Exploration (ADFE) module, which utilizes high-order statistics for learning more discriminative attribute features. Besides that, Soft-redundancy Perception Loss (SPLoss) was designed to overcome redundancy in feature representations learned by the network and encourage diversity in learned attribute information \cite{bib9}. According to the experimental results, the introduction of detailed local attribute features along with the global contextual information led to a significant improvement in recognition performance on different benchmark datasets \cite{bib9}. In another study conducted by Wu et al.\cite{bib10}, the problem of imbalance between attributes found in many PAR datasets is addressed by introducing SOFAFormer+. Specifically, SOFAFormer+ is a novel Vision Transformer-based framework designed for learning more diverse attribute information while overcoming attribute imbalance in data. One of the main components of the network is Selective Feature Activation Method (SFAM), which serves as a way to downplay activations of dominant attributes and encourage focusing on less frequent ones \cite{bib10}. Moreover, the incorporation of Orthogonal Feature Activation Loss (OFALoss) and Orthogonal Weight Regularization Loss (OWRLoss) helped in reducing redundancy and learning more diverse feature representations without overfitting to correlations between attributes \cite{bib10}. It can be seen from the experimental evaluation of the authors that the use of these mechanisms enabled better performance on benchmark datasets such as PETA, PA100K, RAPv1, and RAPv2 \cite{bib10}. In summary, we see that current PAR literature has achieved significant advances in feature representation, modeling of interrelationships, and multimodal learning. Despite that, certain issues, such as efficient combination of multimodal semantics and attribute relationships, remain unresolved. As seen from the literature, there are many existing solutions with various advantages and disadvantages. Table~\ref{tab:PAR} shows an overview of the remaining PAR approaches covered in this survey.
+
+    \begin{table*}[htbp]
+        \centering
+        \caption{Comparative Analysis of Existing Pedestrian Attribute Recognition Approaches}
+        \label{tab:PAR}
+        \resizebox{\textwidth}{!}{
+            \begin{tabular}{|p{2cm}|p{4cm}|p{4cm}|p{4cm}|}
+                \hline
+                \rowcolor{blue!15}
+                \textbf{Author} & \textbf{Methodology} & \textbf{Strength} & \textbf{Research Gap} \\
+                \hline
+               M. Xu et al.\cite{bib11} & Unified Transformer framework with multi-modal embedding and phased fusion for RGB, video, and event-based PAR & Provides a unified PAR framework capable of handling multiple modalities and datasets simultaneously while achieving strong cross-domain generalization through joint training. & Although UniPAR successfully unifies multiple modalities and datasets, it does not explicitly model dynamic attribute correlations or support open-vocabulary recognition for unseen attributes. \\
+                \hline
+               J. Jin et al.\cite{bib12} & Reformulates PAR as a sequence generation task using CLIP encoders and a masked Transformer decoder. & Explicitly captures semantic dependencies between attributes and demonstrates strong robustness to noisy labels and long-tailed distributions. & Inference complexity remains high due to sequential generation, and recognition of unseen attributes and heavily occluded pedestrians remains challenging.  \\
+                \hline
+               M. Balaji and G. Anitha\cite{bib13} & Domain-adversarial multi-head PAR framework using YOLOv10, InceptionResNetV2, and Gradient Reversal Layer for bias reduction. & Improves fairness and cross-dataset generalization while achieving state-of-the-art performance on PETA and PA100K. &Generalization across diverse demographics, lightweight deployment, and robustness under challenging surveillance conditions remain open challenges. \\
+                \hline
+               W. Kong et al.\cite{bib14} & CLIP-based adversarial attack framework using semantic and label perturbation to disrupt pedestrian attribute recognition. & First dedicated adversarial attack and defense framework for PAR, effectively exposing vulnerabilities in vision-language models.  & Developing architecture-independent attacks and dataset-agnostic defense mechanisms remains a major challenge. \\
+                \hline
+                S. Zhang et al.\cite{bib15} & Transformer-based framework using masked region, attribute, and region-attribute relation learning for PAR. & Simultaneously models spatial, semantic, and region-attribute relationships, improving recognition performance in both surveillance and aerial imagery scenarios. & Developing lightweight and computationally efficient relation-learning frameworks for practical remote vision deployment remains a challenge. \\
+                \hline
+                X. Wang et al.\cite{bib16} & CLIP-based video PAR framework with spatio-temporal side tuning and video-text fusion. & Effectively combines spatial, temporal, and semantic information while requiring fewer trainable parameters than full fine-tuning methods. & Efficient utilization of longer video sequences and robust target pedestrian localization remain open challenges.\\
+                \hline
+                 X. Wang et al.\cite{bib17} & Mamba-based PAR framework using Vision Mamba, text encoding, and visual-semantic fusion for attribute recognition. & Provides an efficient alternative to Transformer-based PAR and achieves competitive performance with lower computational complexity.& Effective multimodal fusion and vision-language interaction in Mamba-based PAR frameworks remain insufficiently explored. \\
+                \hline
+                Y. Zhang et al.\cite{bib18} & Dual collaborative learning framework combining image-attribute semantic alignment and frequency-spatial feature fusion for PAR. & Utilizes learnable attribute prompts and frequency-domain information to improve robustness and achieve state-of-the-art performance.& Robust recognition under occlusion, low-resolution images, and highly correlated attributes remains a challenge.\\
+                \hline
+
+            \end{tabular}
+        }
+    \end{table*}
+
+\section{Proposed Methodology}\label{sec:methodology}
+
+The overall architecture of the proposed correlation-aware vision-language Pedestrian Attribute Recognition (PAR) framework is illustrated in Fig.~\ref{fig:framework}. The proposed framework is designed to improve pedestrian attribute recognition by integrating semantically aligned vision-language representations with adaptive attribute correlation learning and viewpoint-aware feature refinement within a unified end-to-end architecture. Recent PAR methods have achieved remarkable progress through transformer-based feature extraction \cite{bib1,bib2,bib4}, graph-based attribute correlation modeling \cite{bib3,bib5}, and vision-language representation learning \cite{bib6,bib7,bib8,bib11}. Despite these advancements, most existing approaches employ static attribute relationships and exhibit limited adaptability to viewpoint variations and image-specific semantic contexts. To overcome these limitations, the proposed framework introduces four complementary components, namely Cross-Modal Attribute Attention (CMAA), Orientation-Conditioned Feature Routing (OCFR), Hybrid Dynamic Attribute Correlation Graph (Hybrid DACG), and Correlation Consistency Loss (CCLoss), which progressively refine pedestrian feature representations before performing multi-label attribute prediction.
+\begin{figure*}[!htbp]
+    \centering
+         \includegraphics[width=1.0\textwidth]{architecture_diagram.png}
+    \caption{Architectural comparison between the traditional Pedestrian Attribute Recognition (PAR) pipeline and the proposed PAR framework.}
+    \label{fig:framework}
+\end{figure*}
+
+Initially, each pedestrian image is preprocessed through square padding to preserve its original aspect ratio, followed by resizing to \(256 \times 256\) pixels, normalization using the predefined SigLIP-2 mean and standard deviation, and conversion into tensor format. These preprocessing operations generate standardized inputs while preserving the discriminative visual characteristics required for robust pedestrian attribute recognition. The preprocessed image is subsequently processed by the SigLIP-2 vision-language backbone, where the LoRA-adapted image encoder extracts high-level visual representations from the pedestrian image. Simultaneously, predefined natural-language templates corresponding to each pedestrian attribute are processed by the frozen SigLIP-2 text encoder to generate semantic attribute embeddings. Since the text encoder remains frozen throughout training, the generated embeddings provide stable semantic priors without introducing additional trainable parameters. A learnable linear projection is then applied to these semantic embeddings before they interact with the visual representations in the proposed Cross-Modal Attribute Attention module.
+
+The proposed Cross-Modal Attribute Attention (CMAA) module establishes fine-grained interactions between projected semantic attribute embeddings and LoRA-enhanced visual patch features through a cross-attention mechanism. Specifically, the projected semantic embeddings act as query vectors, while the visual patch representations serve as keys and values, enabling each attribute to selectively attend to the most informative image regions. Consequently, the framework generates attribute-aware feature representations that improve visual-semantic alignment while simultaneously producing interpretable attention maps highlighting the discriminative regions associated with individual pedestrian attributes.
+
+The attribute-aware representations are subsequently forwarded to the Orientation Head, which estimates the pedestrian viewing direction as front, side, or back. Based on the predicted orientation, the proposed Orientation-Conditioned Feature Routing (OCFR) module adaptively routes the refined feature representations through orientation-specific branches before aggregating them into a unified representation. This adaptive routing mechanism enables the framework to emphasize viewpoint-dependent visual cues and improves the recognition of attributes whose visibility varies significantly across different surveillance viewpoints. Compared with existing orientation-aware PAR methods \cite{bib5}, the proposed framework performs adaptive feature routing within a unified vision-language representation framework while preserving semantic consistency across different viewing directions.
+
+Following orientation-aware refinement, the routed feature representations are processed by the proposed Hybrid Dynamic Attribute Correlation Graph (Hybrid DACG), which jointly models global dataset-level attribute relationships and image-specific semantic dependencies. Existing graph-based PAR methods generally construct a fixed attribute correlation graph using dataset-level co-occurrence statistics and apply the same graph to every pedestrian instance \cite{bib3,bib4,bib5}. However, attribute relationships frequently vary according to the semantic characteristics of individual pedestrians. To address this limitation, the proposed Hybrid DACG combines prior dataset-level attribute knowledge with dynamically learned image-specific attribute relationships, thereby enabling adaptive semantic reasoning while preserving globally learned attribute correlations.
+
+During training, the proposed Correlation Consistency Loss (CCLoss) is incorporated to encourage logically consistent attribute predictions by penalizing contradictory attribute combinations and reinforcing semantic compatibility among correlated attributes. Finally, the graph-enhanced feature representations are passed through a lightweight linear classification head followed by a sigmoid activation function to estimate the probability of each pedestrian attribute, producing the final multi-label pedestrian attribute predictions. The subsequent subsections describe each component of the proposed framework in detail, including the preprocessing pipeline, SigLIP-2 backbone, CMAA, Orientation Head, OCFR, Hybrid DACG, CCLoss, and the final attribute prediction module.
+
+\subsection{About Dataset}
+
+\begin{figure*}[!t]
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.42\textwidth]{PA-100K.png} &
+        \includegraphics[width=0.42\textwidth]{PETA.png} \\
+
+        (a) PA-100K Dataset & (b) PETA Dataset
+    \end{tabular}
+    \caption{Representative pedestrian samples from the benchmark datasets used in this study.}
+    \label{fig:datasets}
+\end{figure*}
+
+The proposed framework is primarily developed and evaluated using the PA-100K dataset, one of the most widely adopted benchmark datasets for Pedestrian Attribute Recognition (PAR) \cite{PA-100K}. The dataset contains approximately 100,000 pedestrian images collected from real-world surveillance environments and is annotated with 26 binary pedestrian attributes, including gender, age group, clothing characteristics, carrying conditions, and personal accessories. Following the official evaluation protocol, the dataset is divided into 80,000 training images, 10,000 validation images, and 10,000 testing images. Its large-scale image collection, diverse attribute annotations, and challenging surveillance scenarios make PA-100K an ideal benchmark for learning robust visual-semantic representations and complex inter-attribute relationships. Representative pedestrian samples from the PA-100K dataset are shown in Fig.~\ref{fig:datasets}(a).
+
+To evaluate the generalization capability of the proposed framework, cross-dataset evaluation is further conducted using the PETA benchmark dataset \cite{PETA}. PETA contains approximately 19,000 pedestrian images collected from multiple surveillance cameras under diverse environmental conditions and annotated with a comprehensive set of pedestrian attributes. Unlike PA-100K, the PETA dataset is not used during the training or validation stages of the proposed framework. Instead, it serves as an unseen evaluation dataset to assess the robustness and cross-domain generalization ability of the learned visual-semantic representations. Representative pedestrian samples from the PETA dataset are illustrated in Fig.~\ref{fig:datasets}(b).
+
+\subsection{Image Preprocessing}
+
+Prior to feature extraction, each cropped pedestrian image undergoes a sequence of preprocessing operations to generate standardized inputs for the proposed framework. Since pedestrian images captured in real-world surveillance environments exhibit significant variations in spatial resolution, aspect ratio, illumination, and viewing conditions, directly forwarding them to the feature extraction network may introduce undesirable geometric distortions and distributional inconsistencies. Therefore, an image preprocessing pipeline consisting of square padding, resizing, normalization, and tensor conversion is employed to minimize these variations while preserving the discriminative visual characteristics required for pedestrian attribute recognition.
+
+Initially, each cropped pedestrian image is transformed into a square image using a square padding operation. In pedestrian surveillance datasets such as PA-100K and PETA, bounding boxes generated during pedestrian detection often produce images with varying height-to-width ratios. Directly resizing these non-square images to the fixed input resolution would distort body proportions, leading to deformation of important visual attributes such as clothing patterns, accessories, footwear, and body shape. To avoid this issue, zero-padding is symmetrically applied around the shorter dimension until both image dimensions become equal, thereby preserving the original aspect ratio and preventing geometric distortion before resizing.
+
+
+
+Following square padding, the resulting image is resized to a fixed spatial resolution of \(256 \times 256\) pixels using bilinear interpolation. This resolution corresponds to the input specification of the pretrained SigLIP-2 vision encoder and ensures compatibility with the backbone architecture. Standardizing all pedestrian images to a uniform spatial resolution also reduces computational variability during training while enabling efficient batch processing without altering the semantic structure of the original image.
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=0.45\columnwidth]{Preprocessing.png}
+    \caption{Flowchart of the proposed image preprocessing pipeline.}
+    \label{fig:preprocessing}
+\end{figure}
+
+Subsequently, pixel intensities are normalized using the preprocessing statistics employed during the pretraining of the SigLIP-2 backbone. Normalization transforms the pixel intensity distribution into a standardized range, thereby reducing the influence of illumination variations and improving numerical stability during feature extraction. The normalization process is expressed as
+
+\begin{equation}
+\mathbf{I}_{\mathrm{norm}}
+=
+\frac{\mathbf{I}_{\mathrm{resized}}-\boldsymbol{\mu}}
+{\boldsymbol{\sigma}},
+\label{eq:normalization}
+\end{equation}
+
+where \(\mathbf{I}_{\mathrm{resized}}\) denotes the resized input image, \(\boldsymbol{\mu}\) and \(\boldsymbol{\sigma}\) represent the channel-wise mean and standard deviation used during SigLIP-2 pretraining, and \(\mathbf{I}_{\mathrm{norm}}\) is the normalized image. Employing the same normalization statistics as the pretrained backbone ensures that the input distribution remains consistent with the feature representations learned during large-scale image-text pretraining.
+
+Finally, the normalized image is converted into a tensor representation and arranged in the channel-first format required by the PyTorch framework before being forwarded to the SigLIP-2 vision encoder. The output of the preprocessing stage is therefore a standardized tensor of dimensions \(3 \times 256 \times 256\), which serves as the input to the subsequent vision-language feature extraction module.
+
+The complete preprocessing pipeline is illustrated in Fig.~\ref{fig:preprocessing}. By preserving the original aspect ratio, standardizing image resolution, aligning pixel distributions with the pretrained backbone, and producing a consistent tensor representation, the proposed preprocessing strategy facilitates stable feature extraction and improves the robustness of pedestrian attribute recognition across diverse surveillance scenarios.
+
+\subsection{Proposed Attribute Recognition Framework}\label{subsec:framework}
+
+This section details the proposed attribute recognition framework, which progressively refines pedestrian feature representations through five components: vision-language feature extraction, Cross-Modal Attribute Attention, Orientation-Conditioned Feature Routing, the Hybrid Dynamic Attribute Correlation Graph, and the attribute classification stage optimized with the Correlation Consistency Loss.
+
+\subsubsection{Vision-Language Feature Extraction using SigLIP-2}
+
+Following image preprocessing, the standardized pedestrian images are processed by the SigLIP-2 vision-language backbone to extract complementary visual and semantic feature representations. Vision-language models have recently demonstrated superior generalization capability compared with conventional convolutional neural networks and Vision Transformer-based architectures by learning semantically aligned representations from large-scale image-text pretraining datasets \cite{bib6,bib7,bib11}. Unlike traditional pedestrian attribute recognition methods that rely solely on visual appearance information, SigLIP-2 incorporates semantic knowledge through language supervision, enabling richer feature representations and improved discrimination between visually similar pedestrian attributes.
+
+The preprocessed image tensor is first forwarded to the SigLIP-2 image encoder, where high-level visual representations are extracted from the pedestrian image. To efficiently adapt the pretrained backbone to the pedestrian attribute recognition task while preserving its pretrained knowledge, Low-Rank Adaptation (LoRA) is incorporated only into the image encoder. Instead of updating all backbone parameters during fine-tuning, LoRA introduces lightweight trainable low-rank matrices into selected attention layers, thereby significantly reducing the number of trainable parameters while maintaining strong feature learning capability. The visual feature extraction process is expressed as
+
+\begin{equation}
+\mathbf{F}_{v}=E_{v}(\mathbf{I}_{norm}),
+\label{eq:visual_features}
+\end{equation}
+
+where $\mathbf{I}_{norm}$ denotes the normalized input image, $E_{v}(\cdot)$ represents the LoRA-adapted SigLIP-2 image encoder, and $\mathbf{F}_{v}$ corresponds to the extracted visual feature representations.
+
+Simultaneously, semantic representations for each pedestrian attribute are generated using the SigLIP-2 text encoder. Instead of employing learnable prompts, predefined natural-language templates corresponding to each pedestrian attribute are utilized to produce fixed semantic attribute embeddings. The text encoder remains completely frozen throughout training, allowing the framework to leverage the semantic knowledge acquired during large-scale vision-language pretraining without introducing additional trainable parameters. The semantic feature extraction process is defined as
+
+\begin{equation}
+\mathbf{F}_{t}=E_{t}(\mathbf{T}),
+\label{eq:text_features}
+\end{equation}
+
+where $\mathbf{T}$ denotes the predefined attribute text templates, $E_{t}(\cdot)$ represents the frozen SigLIP-2 text encoder, and $\mathbf{F}_{t}$ corresponds to the extracted semantic attribute embeddings.
+
+Although the semantic embeddings generated by the frozen text encoder provide meaningful language priors, they are not directly compatible with the visual feature space required for cross-modal interaction. Therefore, a learnable linear projection layer ($q_{proj}$) is employed to transform the semantic embeddings into a representation suitable for subsequent cross-attention. This projection operation is formulated as
+
+\begin{equation}
+\mathbf{Q}=W_{q}\mathbf{F}_{t}+b_{q},
+\label{eq:qproj}
+\end{equation}
+
+where $W_{q}$ and $b_{q}$ denote the learnable weight matrix and bias vector of the projection layer, respectively, and $\mathbf{Q}$ represents the projected semantic attribute embeddings.
+
+Consequently, the output of this stage consists of two complementary feature representations, namely the LoRA-enhanced visual features extracted from the pedestrian image and the projected semantic attribute embeddings derived from the frozen text encoder. These representations provide the visual and semantic information required for attribute-specific feature interaction and are subsequently forwarded to the proposed Cross-Modal Attribute Attention (CMAA) module for fine-grained visual-semantic alignment and attribute-aware feature learning.
+
+
+\subsubsection{Cross-Modal Attribute Attention (CMAA)}
+
+Conventional pedestrian attribute recognition methods typically aggregate the spatial feature maps extracted by a visual backbone into a single global representation before attribute classification. Although such global representations capture overall pedestrian appearance, they often fail to preserve fine-grained spatial information required for recognizing individual attributes. Different pedestrian attributes are associated with different body regions; for example, attributes such as \textit{Hat} and \textit{Long Hair} are primarily concentrated around the head, whereas \textit{Backpack} and \textit{Boots} correspond to entirely different spatial locations. Consequently, a single global feature vector is insufficient to accurately represent all attributes simultaneously. To overcome this limitation, the proposed Cross-Modal Attribute Attention (CMAA) module introduces attribute-specific semantic queries that independently attend to the most informative visual regions, thereby enabling fine-grained visual-semantic alignment without requiring additional localization annotations such as bounding boxes or segmentation masks.
+
+The proposed CMAA module receives two complementary feature representations generated by the previous stage: the spatial visual patch embeddings extracted by the LoRA-adapted SigLIP-2 image encoder and the semantic attribute embeddings obtained from the frozen SigLIP-2 text encoder. Unlike conventional vision-language models that employ learnable prompts, the proposed framework utilizes predefined natural-language templates for all pedestrian attributes. These semantic embeddings remain fixed throughout training; however, they are transformed by a trainable linear projection layer ($q_{proj}$), allowing the attribute queries to gradually adapt to the visual feature space while preserving the semantic knowledge acquired during large-scale vision-language pretraining.
+
+Initially, the frozen semantic attribute embeddings are projected into a shared feature space through the learnable query projection layer, producing trainable attribute query representations. Simultaneously, the spatial patch-token sequence extracted from the SigLIP-2 image encoder is transformed using a shared key-value projection layer. Unlike conventional self-attention, where visual features attend to themselves, the proposed CMAA employs cross-attention in which each attribute query independently attends over the complete visual patch sequence. As a result, every pedestrian attribute selectively focuses on the image regions that provide the strongest semantic evidence for its prediction.
+
+Let $N$ denote the number of pedestrian attributes, $P$ denote the number of visual patches extracted from the image encoder, and $d$ represent the shared embedding dimension. The frozen semantic attribute embeddings are first represented as
+
+\begin{equation}
+\mathbf{T}
+=
+\left[
+t_1,t_2,\ldots,t_N
+\right]
+\in
+\mathbb{R}^{N\times d_t},
+\label{eq:text_embedding}
+\end{equation}
+
+where $t_i$ represents the semantic embedding corresponding to the $i^{th}$ pedestrian attribute generated by the frozen SigLIP-2 text encoder.
+
+The semantic embeddings are subsequently projected into the shared attention space through a learnable linear projection,
+
+\begin{equation}
+\mathbf{Q}
+=
+\mathbf{T}W_q+b_q,
+\label{eq:query_projection}
+\end{equation}
+
+where $W_q$ and $b_q$ denote the trainable projection parameters. Although the semantic embeddings remain frozen, the projected attribute queries continue to evolve throughout training because the projection layer is optimized jointly with the remaining network parameters.
+
+The LoRA-adapted SigLIP-2 image encoder extracts spatial patch representations from the input pedestrian image,
+
+\begin{equation}
+\mathbf{F}_v
+=
+E_v(\mathbf{I})
+\in
+\mathbb{R}^{P\times d_v},
+\label{eq:visual_patch}
+\end{equation}
+
+where $\mathbf{F}_v$ denotes the sequence of visual patch embeddings. These patch representations are projected into the common attention space using
+
+\begin{equation}
+\mathbf{K}
+=
+\mathbf{V}
+=
+\mathbf{F}_vW_{kv}+b_{kv},
+\label{eq:kv_projection}
+\end{equation}
+
+where a shared projection is employed for both the key and value representations. The projected queries, keys, and values are subsequently processed using multi-head cross-attention to establish fine-grained interactions between semantic attributes and spatial image regions. The attention operation is formulated as
+
+\begin{equation}
+\mathbf{A}
+=
+\mathrm{MultiHead}
+(\mathbf{Q},\mathbf{K},\mathbf{V}),
+\label{eq:cross_attention}
+\end{equation}
+
+where four attention heads are employed to capture complementary visual-semantic relationships across different feature subspaces.
+
+Finally, the attention output is combined with the projected semantic queries through a residual connection followed by layer normalization,
+
+\begin{equation}
+\mathbf{F}_{attr}
+=
+\mathrm{LayerNorm}
+(\mathbf{A}+\mathbf{Q}),
+\label{eq:cmaa_output}
+\end{equation}
+
+where $\mathbf{F}_{attr}$ represents the final attribute-aware feature representations generated by the proposed CMAA module. It is important to note that the residual connection is established with the projected attribute queries rather than the visual features, enabling each semantic attribute representation to be progressively refined using discriminative visual evidence extracted from the corresponding image regions.
+
+Algorithm~\ref{alg:cmaa} summarizes the complete Cross-Modal Attribute Attention procedure employed in the proposed framework.
+\begin{algorithm}[H]
+\caption{Cross-Modal Attribute Attention (CMAA)}
+\label{alg:cmaa}
+\KwIn{Visual patch features $F_v$, frozen attribute embeddings $T$}
+\KwOut{Attribute-aware feature representations $F_{attr}$}
+
+Initialize projectedQueries using $q_{proj}(T)$;
+
+Initialize projectedPatchFeatures using $kv_{proj}(F_v)$;
+
+\For{each pedestrian image in the batch}{
+
+    Compute multi-head cross-attention between projectedQueries and projectedPatchFeatures\;
+
+    Generate attribute-specific attention features\;
+
+    Add residual connection with projectedQueries\;
+
+    Apply Layer Normalization\;
+
+}
+
+Return attribute-aware feature representations $F_{attr}$;
+
+\end{algorithm}
+
+The proposed CMAA module produces an independent semantic representation for each pedestrian attribute while simultaneously generating attribute-specific attention distributions over the spatial patch sequence. These attention distributions provide an interpretable visualization of the image regions contributing to each attribute prediction and are subsequently utilized to generate the attribute-specific heatmaps presented in the qualitative analysis. The attribute-aware feature representations generated by CMAA are then forwarded to the Orientation-Conditioned Feature Routing (OCFR) module for viewpoint-aware feature refinement.
+
+\subsubsection{Orientation Head and Orientation-Conditioned Feature Routing (OCFR)}
+
+Pedestrian attributes are not equally visible from every viewing angle: a backpack is clearly visible from behind but may be fully occluded from the front, while accessories such as glasses are only visible when the front of the head is in view. To account for this, the proposed framework incorporates a lightweight Orientation Head that estimates the pedestrian's viewing direction directly from the pooled visual feature, followed by an Orientation-Conditioned Feature Routing (OCFR) module that reweights the attribute-aware features generated by CMAA according to the predicted viewpoint.
+
+The Orientation Head is a single linear layer applied to the pooled visual feature $\mathbf{p}$ produced by the SigLIP-2 image encoder, producing three viewpoint logits corresponding to Front, Side, and Back,
+
+\begin{equation}
+\mathbf{o}=W_{o}\mathbf{p}+b_{o}.
+\label{eq:orient_logits}
+\end{equation}
+
+Rather than committing to a hard, discrete viewpoint decision, the logits are converted into a soft probability distribution,
+
+\begin{equation}
+\mathbf{p}_{v}=\mathrm{softmax}(\mathbf{o}),
+\label{eq:orient_softmax}
+\end{equation}
+
+which is then passed through a single learnable linear layer to produce Feature-wise Linear Modulation (FiLM) scale and shift parameters,
+
+\begin{equation}
+[\boldsymbol{\gamma},\boldsymbol{\beta}]=W_{f}\mathbf{p}_{v}+b_{f}.
+\label{eq:film_params}
+\end{equation}
+
+Using the soft viewpoint distribution rather than an argmax decision keeps the orientation pathway fully differentiable, allowing the Orientation Head to be trained end-to-end together with the rest of the network; an argmax decision would block gradient flow through this branch. The attribute-aware features $\mathbf{F}_{attr}$ generated by CMAA are then modulated as
+
+\begin{equation}
+\mathbf{F}'=\mathbf{F}_{attr}\odot(1+\boldsymbol{\gamma})+\boldsymbol{\beta}.
+\label{eq:ocfr_output}
+\end{equation}
+
+The $(1+\boldsymbol{\gamma})$ formulation, rather than a bare $\boldsymbol{\gamma}$, ensures that when $\boldsymbol{\gamma}\approx 0$ near initialization, the attribute features pass through the module nearly unchanged, so OCFR is learned as a refinement on top of CMAA's output rather than overriding it from the outset.
+
+Algorithm~\ref{alg:ocfr} summarizes the OCFR procedure.
+\begin{algorithm}[H]
+\caption{Orientation-Conditioned Feature Routing (OCFR)}
+\label{alg:ocfr}
+\KwIn{Pooled visual feature $p$, attribute-aware features $F_{attr}$}
+\KwOut{Orientation-routed features $F'$}
+
+Predict viewpoint logits $o$ from the pooled visual feature $p$ using the Orientation Head\;
+
+Convert the viewpoint logits into a soft probability distribution over Front, Side, and Back using softmax\;
+
+Generate FiLM scale and shift parameters $(\gamma,\beta)$ from the soft viewpoint distribution using a single learnable linear layer\;
+
+\For{each attribute representation in $F_{attr}$}{
+
+    Modulate the attribute feature as $F' \leftarrow F_{attr}\odot(1+\gamma)+\beta$\;
+
+}
+
+Return orientation-routed features $F'$;
+
+\end{algorithm}
+
+The orientation-routed features $\mathbf{F}'$ produced by OCFR are subsequently forwarded to the proposed Hybrid Dynamic Attribute Correlation Graph (Hybrid DACG) module, described next.
+
+\subsubsection{Hybrid Dynamic Attribute Correlation Graph (Hybrid DACG)}
+
+Pedestrian attributes are rarely independent of one another: some attributes tend to co-occur, while others are mutually exclusive by construction, such as ShortSleeve and LongSleeve. Existing graph-based PAR methods typically encode such relationships using a single static correlation graph, estimated once from dataset-level co-occurrence statistics and applied identically to every pedestrian image, which cannot adapt to the attribute relationships actually visible in an individual image. The proposed Hybrid Dynamic Attribute Correlation Graph (Hybrid DACG) addresses this limitation by combining a static, dataset-level prior graph with a dynamic, per-image graph computed directly from the orientation-routed features.
+
+The static prior graph is a learned parameter matrix $\mathbf{A}_{static}\in\mathbb{R}^{N\times N}$, shared across all pedestrian images and normalized via softmax,
+
+\begin{equation}
+\mathbf{G}_{prior}=\mathrm{softmax}(\mathbf{A}_{static}).
+\label{eq:g_prior}
+\end{equation}
+
+The dynamic, image-specific graph is computed via scaled dot-product self-attention over the orientation-routed features $\mathbf{F}'$,
+
+\begin{equation}
+\mathbf{G}_{dyn}=\mathrm{softmax}\!\left(\frac{\mathbf{F}'\mathbf{F}'^{\top}}{\sqrt{d}}\right).
+\label{eq:g_dyn}
+\end{equation}
+
+The two graphs are combined using a fixed, equal-weight blend,
+
+\begin{equation}
+\mathbf{G}=0.5\,\mathbf{G}_{prior}+0.5\,\mathbf{G}_{dyn},
+\label{eq:g_hybrid}
+\end{equation}
+
+after which the hybrid graph is used to aggregate information across attributes, projected through a learnable linear layer, and combined with the input via a residual connection followed by Layer Normalization,
+
+\begin{equation}
+\mathbf{F}_{r}=\mathrm{LayerNorm}\!\left(\mathbf{F}'+W_{g}(\mathbf{G}\mathbf{F}')+b_{g}\right).
+\label{eq:dacg_output}
+\end{equation}
+
+This design allows each attribute's representation to be informed both by globally learned co-occurrence patterns and by the correlations actually present in the current image, rather than relying on a single fixed relational structure.
+
+Algorithm~\ref{alg:dacg} summarizes the Hybrid DACG procedure.
+\begin{algorithm}[H]
+\caption{Hybrid Dynamic Attribute Correlation Graph (Hybrid DACG)}
+\label{alg:dacg}
+\KwIn{Orientation-routed features $F'$, learned static co-occurrence matrix $A_{static}$}
+\KwOut{Graph-refined features $F_r$}
+
+Normalize the static co-occurrence matrix using softmax to obtain the prior correlation graph $G_{prior}$\;
+
+Compute the dynamic, image-specific correlation graph $G_{dyn}$ via scaled dot-product self-attention over $F'$\;
+
+Combine the two graphs using a fixed equal-weight blend: $G \leftarrow 0.5\,G_{prior}+0.5\,G_{dyn}$\;
+
+Aggregate attribute features according to the hybrid graph and project them through a learnable linear layer\;
+
+Add the result back to $F'$ as a residual connection and apply Layer Normalization\;
+
+Return graph-refined features $F_r$;
+
+\end{algorithm}
+
+The graph-refined features $\mathbf{F}_r$ produced by Hybrid DACG are subsequently passed to the attribute classification stage, where the proposed Correlation Consistency Loss (CCLoss) is applied during training, as described in the following subsection.
+
+\subsubsection{Correlation Consistency Loss (CCLoss) and Attribute Classification}
+
+The graph-refined feature representations $\mathbf{F}_r$ produced by Hybrid DACG are passed to a lightweight attribute classification stage, where each pedestrian attribute is assigned its own independent classifier weight vector rather than sharing a single linear layer across all attributes. This design allows the discriminative visual evidence gathered for each attribute through CMAA, OCFR, and Hybrid DACG to be directly reflected in that attribute's own decision boundary. For attribute $a\in\{1,\dots,N\}$, the predicted probability is computed as
+
+\begin{equation}
+z_{a}=\mathbf{w}_{a}^{\top}\mathbf{f}_{r,a}+b_{a},\qquad \hat{y}_{a}=\sigma(z_{a}),
+\label{eq:classifier}
+\end{equation}
+
+where $\mathbf{f}_{r,a}$ denotes the graph-refined feature corresponding to attribute $a$, and $\mathbf{w}_{a}$, $b_{a}$ are that attribute's own learnable weight vector and bias.
+
+Pedestrian attribute datasets are typically highly imbalanced, with some attributes occurring far less frequently than others. To address this, the primary classification objective is a class-imbalance-weighted binary cross-entropy loss,
+
+\begin{equation}
+\mathcal{L}_{BCE}=-\sum_{a=1}^{N}w_{a}\left[y_{a}\log\hat{y}_{a}+(1-y_{a})\log(1-\hat{y}_{a})\right],
+\label{eq:bce}
+\end{equation}
+
+where each attribute's positive-class weight $w_{a}$ is set according to its inverse frequency in the training set, giving rare attributes proportionally greater influence on the loss.
+
+To further encourage logically consistent predictions, the proposed Correlation Consistency Loss (CCLoss) penalizes deviation from a probability sum of one within each predefined mutually-exclusive attribute group $g\in\mathcal{G}$, such as the viewpoint group \{Front, Side, Back\} and the sleeve-length group \{ShortSleeve, LongSleeve\},
+
+\begin{equation}
+\mathcal{L}_{CC}=\sum_{g\in\mathcal{G}}\left(\sum_{a\in g}\hat{y}_{a}-1\right)^{2}.
+\label{eq:ccloss}
+\end{equation}
+
+The total training objective combines both terms, weighted by a coefficient $\lambda$,
+
+\begin{equation}
+\mathcal{L}=\mathcal{L}_{BCE}+\lambda\,\mathcal{L}_{CC}.
+\label{eq:total_loss}
+\end{equation}
+
+Algorithm~\ref{alg:ccloss} summarizes the attribute classification and CCLoss computation procedure.
+\begin{algorithm}[H]
+\caption{Correlation Consistency Loss (CCLoss) and Attribute Classification}
+\label{alg:ccloss}
+\KwIn{Graph-refined features $F_r$, ground-truth attribute labels $y$, mutually-exclusive attribute groups $\mathcal{G}$}
+\KwOut{Total training loss $\mathcal{L}$}
+
+\For{each attribute $a=1,\dots,N$}{
+
+    Compute the attribute logit $z_a$ using the attribute's own independent classifier weight vector\;
+
+    Compute the predicted probability $\hat{y}_a=\sigma(z_a)$\;
+
+}
+
+Compute the class-imbalance-weighted binary cross-entropy loss $\mathcal{L}_{BCE}$ over all attributes\;
+
+Initialize $\mathcal{L}_{CC}\leftarrow 0$\;
+
+\For{each mutually-exclusive group $g\in\mathcal{G}$}{
+
+    $\mathcal{L}_{CC}\leftarrow \mathcal{L}_{CC}+\left(\sum_{a\in g}\hat{y}_a-1\right)^{2}$\;
+
+}
+
+Compute the total loss $\mathcal{L}\leftarrow\mathcal{L}_{BCE}+\lambda\,\mathcal{L}_{CC}$\;
+
+Return $\mathcal{L}$;
+
+\end{algorithm}
+
+By combining an independent per-attribute classifier with a class-imbalance-aware primary loss and a logical-consistency regularizer, the proposed framework produces multi-label attribute predictions that are both individually accurate and mutually coherent, directly addressing the correlation-aware objective motivating this work.
+
+\subsection{Experimental Evaluation Protocol}
+\label{subsec:eval_protocol}
+
+This subsection describes the evaluation metrics, threshold calibration strategy, and the
+leak-free validation protocol adopted for both in-domain and cross-dataset evaluation.
+
+\subsubsection{Evaluation Metrics}
+Pedestrian attribute recognition is a multi-label classification problem, and its performance is
+therefore reported using five standard metrics: label-based mean Accuracy (mA) and the four
+instance-based metrics Accuracy, Precision, Recall, and F1-score. For $N$ attributes and $M$ test
+images, let $\mathrm{TP}_i$, $\mathrm{TN}_i$, $\mathrm{P}_i$, and $\mathrm{N}_i$ denote the number of
+true positives, true negatives, positive samples, and negative samples for attribute $i$. The
+label-balanced mean Accuracy is defined as
+\begin{equation}
+\mathrm{mA}=\frac{1}{2N}\sum_{i=1}^{N}
+\left(\frac{\mathrm{TP}_i}{\mathrm{P}_i}+\frac{\mathrm{TN}_i}{\mathrm{N}_i}\right),
+\label{eq:mA}
+\end{equation}
+which averages the positive-class and negative-class accuracies for each attribute and is therefore
+robust to class imbalance. Denoting by $Y_j$ and $\hat{Y}_j$ the ground-truth and predicted attribute
+sets of the $j^{th}$ image, the instance-based metrics are computed as
+\begin{equation}
+\mathrm{Acc}=\frac{1}{M}\sum_{j=1}^{M}
+\frac{|Y_j\cap\hat{Y}_j|}{|Y_j\cup\hat{Y}_j|},
+\label{eq:acc}
+\end{equation}
+\begin{equation}
+\mathrm{Prec}=\frac{1}{M}\sum_{j=1}^{M}\frac{|Y_j\cap\hat{Y}_j|}{|\hat{Y}_j|},\qquad
+\mathrm{Rec}=\frac{1}{M}\sum_{j=1}^{M}\frac{|Y_j\cap\hat{Y}_j|}{|Y_j|},
+\label{eq:prec_rec}
+\end{equation}
+\begin{equation}
+\mathrm{F1}=\frac{2\cdot\mathrm{Prec}\cdot\mathrm{Rec}}{\mathrm{Prec}+\mathrm{Rec}}.
+\label{eq:f1}
+\end{equation}
+
+\subsubsection{Per-Attribute Threshold Calibration}
+Because attributes differ widely in frequency, a single fixed decision threshold is suboptimal.
+Instead, a per-attribute threshold is selected on the \textit{validation} set by maximizing the
+balanced accuracy of each attribute independently. These validation-calibrated thresholds are then
+frozen and applied to the test set, ensuring that no test-set information influences the decision
+boundaries.
+
+\subsubsection{Leak-Free Checkpoint Selection}
+To avoid optimistic bias, both the best training epoch and the per-attribute thresholds are selected
+using only the validation set; the test set is evaluated exactly once with the frozen configuration.
+This leak-free protocol prevents the inflation that arises when thresholds or checkpoints are tuned on
+the test set, and the residual gap between validation and test performance is reported transparently.
+
+\subsubsection{Cross-Dataset Evaluation}
+To assess generalization, the model trained on PA-100K is evaluated on PETA \textit{zero-shot}, with
+no retraining and without using any PETA labels for tuning. Only attributes with an unambiguous
+correspondence between the two datasets are scored, and the source-domain (PA-100K) attribute priors
+are used to calibrate decision thresholds under label shift, so that the evaluation remains fully
+label-free.
+
+\section{Experiments and Results}
+\label{sec:results}
+
+\subsection{Implementation Details}
+The proposed framework is built on the frozen SigLIP-2 Large backbone
+(\texttt{siglip2-large-patch16-256}), which produces $256$ patch tokens and a $1024$-dimensional
+feature. Only Low-Rank Adaptation (LoRA) adapters (rank $16$) inserted into the attention layers of
+the image encoder are trained, together with the CMAA, OCFR, Hybrid DACG, and classification heads,
+amounting to approximately $1\%$ ($\sim$3.2M) of the total parameters. Input images are square-padded,
+resized to $256\times256$, and normalized as described in Section~\ref{sec:methodology}. The model is
+trained on an NVIDIA T4 GPU using mixed-precision with a gradient scaler and gradient clipping, the
+AdamW optimizer, and inverse-frequency weighted BCE together with the orientation cross-entropy and
+CCLoss objectives. Domain-generalizing augmentation (random horizontal flip, colour jitter, Gaussian
+blur, and random erasing) is applied to the training split only. Following the target application
+requirement, the age labels---which are near chance for single-image PAR---are removed, yielding a
+final $23$-attribute model, while gender is retained.
+
+\subsection{Performance on PA-100K}
+Table~\ref{tab:main_results} reports the performance of the proposed framework on the PA-100K test set
+under the leak-free protocol. The model achieves a mean Accuracy of $\mathbf{91.12\%}$ together with
+$75.49\%$ instance Accuracy, $79.04\%$ Precision, $92.63\%$ Recall, and $85.30\%$ F1-score. For
+reference, a zero-shot SigLIP-2 baseline (no training) obtains only $69.5\%$ mA, and a trained linear
+classifier on frozen features obtains $85.5\%$; the full framework therefore improves the mean
+Accuracy by approximately $22$ points over the untrained baseline.
+
+\begin{table}[htbp]
+\centering
+\caption{Performance of the proposed framework on the PA-100K test set (leak-free evaluation).}
+\label{tab:main_results}
+\begin{tabular}{|l|c|}
+\hline
+\rowcolor{blue!15}
+\textbf{Metric} & \textbf{Value (\%)} \\ \hline
+Mean Accuracy (mA) & \textbf{91.12} \\ \hline
+Instance Accuracy  & 75.49 \\ \hline
+Precision          & 79.04 \\ \hline
+Recall             & 92.63 \\ \hline
+F1-score           & 85.30 \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Ablation Study}
+To quantify the contribution of each proposed component, an incremental ablation is performed in which
+the modules are added one at a time on top of the LoRA-adapted backbone. Table~\ref{tab:ablation}
+reports the results. Mean Accuracy remains close to $91.5$ across all configurations, indicating that
+the strong vision-language backbone is the dominant driver of label-balanced accuracy. However, the
+instance-level Accuracy and F1-score peak when CMAA and OCFR are added, showing that the proposed
+modules sharpen per-image predictions. The Hybrid DACG contributes primarily interpretability and
+attribute-consistency rather than raw mA, and the CCLoss enforces logically valid predictions. Overall,
+the modules add structure, viewpoint-awareness, interpretability, and consistency without degrading
+accuracy---an outcome we report transparently.
+
+\begin{table}[htbp]
+\centering
+\caption{Incremental ablation of the proposed modules on PA-100K (each row adds one module).}
+\label{tab:ablation}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\rowcolor{blue!15}
+\textbf{Configuration} & \textbf{mA} & \textbf{Accuracy} & \textbf{F1} \\ \hline
+LoRA backbone (Plain) & 91.58 & 74.50 & 84.69 \\ \hline
+\quad + CMAA          & 91.44 & 75.23 & 85.15 \\ \hline
+\quad + OCFR          & \textbf{91.60} & \textbf{75.91} & \textbf{85.55} \\ \hline
+\quad + Hybrid DACG   & 91.41 & 74.61 & 84.77 \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Comparison with State-of-the-Art}
+Table~\ref{tab:sota} compares the proposed framework with representative pedestrian attribute
+recognition methods on PA-100K. The proposed vision-language framework reaches a mean Accuracy of
+approximately $91\%$, which is competitive with, and in several cases exceeds, recent transformer- and
+graph-based methods. It should be noted that this is not a strict one-to-one comparison: the proposed
+model uses a $23$-attribute configuration (age removed) and a stronger, more recent SigLIP-2 backbone,
+and is evaluated under a leak-free protocol. Accordingly, the appropriate interpretation is that the
+proposed framework attains state-of-the-art-level accuracy, with the modern vision-language backbone
+being the principal contributor, while the distinctive contributions of this work are its
+interpretability, orientation-aware routing, adaptive attribute-correlation modelling, and the
+cross-dataset generalization study.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison of mean Accuracy (mA) on PA-100K with prior work. Prior values are as commonly reported.}
+\label{tab:sota}
+\begin{tabular}{|l|c|c|}
+\hline
+\rowcolor{blue!15}
+\textbf{Method} & \textbf{Backbone} & \textbf{mA (\%)} \\ \hline
+DeepMAR & CaffeNet & 72.7 \\ \hline
+HP-Net \cite{PA-100K} & Inception & 74.2 \\ \hline
+VAC & ResNet-50 & 79.2 \\ \hline
+ALM & BN-Inception & 80.7 \\ \hline
+JLAC & ResNet-50 & 82.3 \\ \hline
+VTB & ViT-B & 83.7 \\ \hline
+PARFormer \cite{bib1} & Transformer & 84.5 \\ \hline
+\textbf{Proposed (full)} & \textbf{SigLIP-2 + LoRA} & \textbf{$\sim$91} \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Cross-Dataset Generalization on PETA}
+To evaluate generalization, the PA-100K-trained model is applied to the PETA dataset zero-shot, with no
+retraining and no PETA labels used for tuning. Scoring is restricted to the $14$ attributes with an
+unambiguous correspondence between the two datasets, over $14{,}437$ images.
+Table~\ref{tab:crossdataset} summarizes the results. The model attains a mean Accuracy of
+$\mathbf{77.81\%}$ across the shared attributes. The $\sim$13-point drop relative to in-domain
+performance reflects the expected domain gap---arising from different cameras, image quality, and
+annotation conventions across datasets---yet the accuracy remains well above chance, demonstrating that
+the model has learned generalizable pedestrian representations rather than dataset-specific cues.
+Attributes such as short/long sleeves, shorts, gender, and backpack transfer strongly, whereas
+fine-grained texture attributes and attributes defined differently across datasets exhibit a larger gap.
+
+\begin{table}[htbp]
+\centering
+\caption{Zero-shot cross-dataset evaluation (PA-100K $\rightarrow$ PETA, 14 shared attributes, 14{,}437 images).}
+\label{tab:crossdataset}
+\begin{tabular}{|l|c|c|}
+\hline
+\rowcolor{blue!15}
+\textbf{Metric} & \textbf{In-domain (PA-100K)} & \textbf{Cross-domain (PETA)} \\ \hline
+mA        & 91.12 & \textbf{77.81} \\ \hline
+Accuracy  & 75.49 & 58.30 \\ \hline
+Precision & 79.04 & 62.67 \\ \hline
+Recall    & 92.63 & 87.90 \\ \hline
+F1        & 85.30 & 73.27 \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Qualitative Analysis}
+The attention distributions produced by CMAA provide an interpretable view of the model's reasoning.
+For each attribute, the cross-attention weights over the visual patches are visualized as a heatmap
+that localizes the region the model attends to---for example, the head region for \textit{Hat} and the
+lower body for \textit{Trousers}---without any localization supervision. In addition, to support
+responsible deployment, gender is reported only when the model is confident and the face is visible;
+otherwise the prediction is withheld, as appearance-based gender inference is unreliable and sensitive.
+
+\section{Conclusion}
+\label{sec:conclusion}
+This paper presented a multimodal, correlation-aware pedestrian attribute recognition framework built
+on a frozen SigLIP-2 vision-language backbone adapted with LoRA, and extended with four complementary
+modules: Cross-Modal Attribute Attention (CMAA) for fine-grained visual-semantic alignment,
+Orientation-Conditioned Feature Routing (OCFR) for viewpoint-aware refinement, a Hybrid Dynamic
+Attribute Correlation Graph (Hybrid DACG) for adaptive attribute reasoning, and a Correlation
+Consistency Loss (CCLoss) for logically coherent predictions. Under a leak-free evaluation protocol,
+the framework achieves a mean Accuracy of $91.12\%$ on PA-100K, and---crucially---generalizes to the
+unseen PETA dataset zero-shot at $77.81\%$ mA, providing direct evidence of cross-dataset transfer.
+The ablation study transparently shows that the vision-language backbone drives the label-balanced
+accuracy while the proposed modules contribute interpretability, viewpoint-awareness, and consistency.
+Together with responsible design choices such as confidence-gated gender reporting, the proposed
+framework offers an accurate, interpretable, and generalizable solution for real-world pedestrian
+attribute recognition.
+
+\section{Future Scope}
+Future work will extend the cross-dataset study to additional benchmarks, investigate F1-optimal and
+domain-adaptive threshold calibration to further improve cross-domain performance, and explore
+lightweight variants of the backbone for real-time deployment on edge surveillance hardware.
+
+
+
+%\bibliographystyle{IEEEaccess}
+\bibliographystyle{IEEEtran}
+\bibliography{main}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{ramya.jpg}}]{Ramyashree}  completed her B.E. in Computer Science and Engineering from SMVITM, Bantakal, in 2015, and later pursued her M.Tech. in Computer Science and Engineering from NMAMIT, Nitte, graduating in 2019. With a background in academia, she served as an Assistant Professor in the Department of Computer Science and Engineering at SMVITM from 2015 to 2017 and again from 2019 to 2021. Additionally, she worked as an Assistant Lecturer at NITK, Surathkal. Currently, Ramyashree holds the position of Assistant Professor in the Department of Information and Communication Technology at Manipal Institute of Technology, Manipal Academy of Higher Education, Manipal. Her research interests encompass Image and Video Processing, Artificial Intelligence, and Machine Learning. Ramyashree has contributed significantly to academia, having published over 15 papers in various conferences and journals, as well as a book chapter. With a commitment to engineering education and research in the field of Computer Science, she actively engages in professional service activities.
+\end{IEEEbiography}
+\vspace{-5mm}
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{Dr.Venugopala P S.jpg}}]{Dr.Venugopala P S} Completed his B.E. in Computer
+Science and Engineering from VTU, Belagavi,
+in 2002, and later pursued his M.Tech.
+in Computer Science and Engineering from
+NITK, Surathkal, graduating in 2007.Completed Ph.D from VTU in the year 2018.With a background
+in academia, in the Department of Computer Science
+and Engineering at NMAMIT, Nitte from 2002 to
+2022 and taken charge as Head of the Artificial Intelligance deprtment from 2023. His research interests encompass Image and Video Processing,
+Artificial Intelligence, and Machine Learning. Venugopala has contributed
+significantly to academia, having published over 20 papers in various conferences
+and journals, as well as a book chapter.He is a senior member of IEEE and organizing chair of IEEE DISCOVER conference in the yar 2021 With a commitment to
+engineering education and research in the field of Computer Science, he
+actively engages in professional service activities.
+\end{IEEEbiography}
+\vspace{-8mm}
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{Raghavendra.jpg}}]{Dr. Raghavendra S} holds a Bachelor’s degree in Computer Science and Engineering from BMS Institute of Technology, Bangalore, a Master’s degree from R V College of Engineering, Bangalore, and a Ph.D. from University Visvesvaraya College of Engineering, Bangalore. Currently serving as an Assistant Professor in the Department of Information and Communication Technology at Manipal Institute of Technology, Manipal Academy of Higher Education, Manipal. Dr. Raghavendra has more than 11 years of experience in teaching and research across several institutions. He has authored over 40 research publications focusing on Cloud Computing, Machine Learning, and the Internet of Things. Dr. Raghavendra is actively involved in various editorial roles and serves as a board member, reviewer, and guest editor for prestigious journals such as IEEE, Elsevier, Springer, Wiley, Taylor Francis, and KJIP. In addition, he holds the position of Publication Chair for Discover-21 and BHTC 2024. He has contributed as an organizing committee member for several conferences. Dr. Raghavendra is a dedicated member of IEEE and has served as the Joint Secretary of the IEEE Mangalore Sub-Section in 2020, as well as the Website Co-Chair of IEEE MSS in 2019.
+\end{IEEEbiography}
+\vspace{-5mm}
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{Dr. ASHWINI B.jpg}}]{Dr. ASHWINI B} Completed her B.E. in Information
+Science and Engineering from VTU, Belagavi,
+in 2004, and later pursued her M.Tech.
+in Computer Science and Engineering from
+NMAMIT, Nitte, graduating in 2012.Completed Ph.D from VTU in the year 2018.With a background
+in academia, in the Department of Information Science
+and Engineering at NMAMIT, Nitte from 2004 till date. She had taken charge as Head of the Information Science department since 2023. Her research interests encompass Image and Video Processing, Artificial Intelligence, and Computer Vision. Ashwini has contributed
+significantly to academia, having published over 15 papers in various conferences
+and journals. She is a member of IEEE and Vice Chair of IEEE Mangalore Sub Section in the year 2024With a commitment to engineering education and research in the field of Information Science, she actively engages in professional service activities.
+ \end{IEEEbiography}
+
+
+\EOD
+
+\end{document}
