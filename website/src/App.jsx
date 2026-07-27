@@ -9,6 +9,7 @@ import LiveDemo from './components/LiveDemo.jsx'
 import HowItWorks from './components/HowItWorks.jsx'
 import Highlights from './components/Highlights.jsx'
 import TechStack from './components/TechStack.jsx'
+import FutureWork from './components/FutureWork.jsx'
 import Footer from './components/Footer.jsx'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -57,6 +58,7 @@ export default function App() {
         <HowItWorks />
         <Highlights />
         <TechStack />
+        <FutureWork />
       </main>
       <Footer />
     </>

@@ -8,6 +8,7 @@ const links = [
   ['How it works', 'how'],
   ['Results', 'results'],
   ['What we used', 'tech'],
+  ['Future', 'future'],
 ]
 
 export default function Nav() {
