@@ -8,9 +8,12 @@ logic from demo_full.py so the website shows genuine model output.
 Run:  python predict_json.py --out ../website/public/assets
 """
 import argparse, json, os
-# Load models from the local HF cache — no internet needed (override with HF_HUB_OFFLINE=0)
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
-os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+# Use the local HF cache when the backbone is already downloaded (no internet needed).
+# On a fresh machine (not cached) it stays online so the model can download the first time.
+_hf_home = os.environ.get("HF_HOME") or os.path.expanduser("~/.cache/huggingface")
+if os.path.isdir(os.path.join(_hf_home, "hub", "models--google--siglip2-large-patch16-256")):
+    os.environ.setdefault("HF_HUB_OFFLINE", "1")
+    os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 import numpy as np
 import torch
 import matplotlib

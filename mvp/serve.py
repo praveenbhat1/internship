@@ -10,9 +10,12 @@ Run:  cd mvp && python serve.py         (http://127.0.0.1:8000)
 Docs: http://127.0.0.1:8000/docs
 """
 import base64, io, json, os
-# Load models from the local HF cache — no internet needed (override with HF_HUB_OFFLINE=0)
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
-os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+# Use the local HF cache when the backbone is already downloaded (no internet needed).
+# On a fresh machine (not cached) it stays online so the model can download the first time.
+_hf_home = os.environ.get("HF_HOME") or os.path.expanduser("~/.cache/huggingface")
+if os.path.isdir(os.path.join(_hf_home, "hub", "models--google--siglip2-large-patch16-256")):
+    os.environ.setdefault("HF_HUB_OFFLINE", "1")
+    os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 import numpy as np
 import torch
 import matplotlib
@@ -20,7 +23,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from PIL import Image
+try:  # optional: lets iPhone HEIC/HEIF uploads work
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+except Exception:
+    pass
 from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import AutoModel, AutoProcessor
 from peft import LoraConfig, get_peft_model
@@ -126,7 +135,13 @@ def health():
 @torch.no_grad()
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    image = Image.open(io.BytesIO(await file.read())).convert("RGB")
+    try:
+        image = Image.open(io.BytesIO(await file.read())).convert("RGB")
+    except Exception:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Couldn't read this image. Please upload a JPG or PNG."},
+        )
     img224 = np.array(square_pad(image).resize((224, 224)))
     px = proc(images=square_pad(image), return_tensors="pt")["pixel_values"].to(DEVICE)
     logits, o_logits, cmaa_attn, dacg_A, pooled = model.forward_explain(px)
