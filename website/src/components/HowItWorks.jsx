@@ -36,8 +36,14 @@ const steps = [
   },
 ]
 
+const boundaries = steps.slice(1).map((_, i) => i + 1) // internal step boundaries: 1,2,3
+
 export default function HowItWorks() {
   const ref = useRef(null)
+  const textRef = useRef(null)
+  const barRef = useRef(null)
+  const layerRefs = useRef([])
+  const activeRef = useRef(0)
   const [active, setActive] = useState(0)
 
   useEffect(() => {
@@ -46,8 +52,34 @@ export default function HowItWorks() {
       start: 'top top',
       end: 'bottom bottom',
       onUpdate: (self) => {
-        const i = Math.min(steps.length - 1, Math.floor(self.progress * steps.length))
-        setActive(i)
+        const p = self.progress * steps.length // 0..steps.length
+        let i = Math.min(steps.length - 1, Math.floor(p))
+        if (i < 0) i = 0
+
+        // continuous progress bar
+        if (barRef.current) barRef.current.style.width = `${self.progress * 100}%`
+
+        // text dips to near-invisible exactly at each boundary, so the content
+        // swap is hidden and the transition reads as one smooth motion
+        const d = Math.min(...boundaries.map((b) => Math.abs(p - b)))
+        const fade = Math.max(0.12, Math.min(1, d * 4))
+        if (textRef.current) {
+          textRef.current.style.opacity = fade
+          textRef.current.style.transform = `translateY(${(1 - fade) * 10}px)`
+        }
+
+        // crossfade visuals + gentle parallax on the active one
+        const frac = p - Math.floor(p)
+        layerRefs.current.forEach((el, k) => {
+          if (!el) return
+          el.style.opacity = k === i ? 1 : 0
+          if (k === i) el.style.transform = `translateY(${(frac - 0.5) * -14}px) scale(1.01)`
+        })
+
+        if (i !== activeRef.current) {
+          activeRef.current = i
+          setActive(i)
+        }
       },
     })
     return () => st.kill()
@@ -67,7 +99,8 @@ export default function HowItWorks() {
               <span className="h-px w-8 bg-olive/70" />
               <span className="section-label">02 — How it works</span>
             </div>
-            <div key={active} className="animate-[fadein_0.5s_ease]">
+
+            <div ref={textRef} className="transition-none will-change-[opacity,transform]">
               <div className="inline-block text-xs font-mono px-3 py-1 rounded-full border border-olive/40 text-olive2 mb-5">
                 {step.tag}
               </div>
@@ -77,12 +110,12 @@ export default function HowItWorks() {
               <p className="text-muted text-base md:text-lg leading-relaxed max-w-lg">{step.body}</p>
             </div>
 
-            {/* progress dots */}
+            {/* discrete dots */}
             <div className="flex items-center gap-3 mt-9">
               {steps.map((s, i) => (
                 <div key={s.n} className="flex items-center gap-3">
                   <div
-                    className={`h-8 w-8 rounded-full border flex items-center justify-center font-mono text-[0.65rem] transition-all ${
+                    className={`h-8 w-8 rounded-full border flex items-center justify-center font-mono text-[0.65rem] transition-all duration-300 ${
                       i === active
                         ? 'border-olive bg-olive text-ink'
                         : i < active
@@ -98,8 +131,10 @@ export default function HowItWorks() {
                 </div>
               ))}
             </div>
-            <div className="mt-6 text-xs font-mono text-muted">
-              {active + 1} / {steps.length} — keep scrolling
+
+            {/* continuous progress bar */}
+            <div className="mt-6 h-1 w-full max-w-xs rounded-full bg-line overflow-hidden">
+              <div ref={barRef} className="h-full bg-olive" style={{ width: '0%' }} />
             </div>
           </div>
 
@@ -108,8 +143,12 @@ export default function HowItWorks() {
             {steps.map((s, i) => (
               <div
                 key={s.n}
-                className="absolute inset-0 flex flex-col items-center justify-center p-6 transition-opacity duration-500"
-                style={{ opacity: i === active ? 1 : 0 }}
+                ref={(el) => (layerRefs.current[i] = el)}
+                className="absolute inset-0 flex flex-col items-center justify-center p-6 will-change-[opacity,transform]"
+                style={{
+                  opacity: i === 0 ? 1 : 0,
+                  transition: 'opacity 0.6s cubic-bezier(0.4,0,0.2,1)',
+                }}
               >
                 <img
                   src={s.img}
@@ -119,7 +158,6 @@ export default function HowItWorks() {
                 <div className="mt-4 text-xs font-mono text-muted text-center">{s.caption}</div>
               </div>
             ))}
-            {/* step counter badge */}
             <div className="absolute top-4 right-4 font-mono text-xs text-olive2/70">{step.n}/04</div>
           </div>
         </div>
