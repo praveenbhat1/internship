@@ -92,12 +92,12 @@ export default function HowItWorks() {
       <div className="sticky top-0 h-screen flex items-center overflow-hidden border-t border-line/60">
         <div className="absolute inset-0 grid-bg opacity-25" />
 
-        {/* giant background step number */}
+        {/* giant background step number — left watermark behind the text */}
         <div
           key={active}
           aria-hidden
-          className="absolute right-2 md:right-10 top-1/2 -translate-y-1/2 font-extrabold leading-none pointer-events-none select-none text-cream/[0.035] animate-[fadein_0.6s_ease]"
-          style={{ fontSize: 'min(48vw, 620px)' }}
+          className="absolute left-[-2vw] md:left-[2vw] top-1/2 -translate-y-1/2 font-extrabold leading-none pointer-events-none select-none text-cream/[0.04] animate-[fadein_0.6s_ease]"
+          style={{ fontSize: 'min(42vw, 540px)' }}
         >
           {step.n}
         </div>
