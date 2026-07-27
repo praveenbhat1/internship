@@ -41,6 +41,7 @@ const boundaries = steps.slice(1).map((_, i) => i + 1) // internal step boundari
 export default function HowItWorks() {
   const ref = useRef(null)
   const textRef = useRef(null)
+  const numRef = useRef(null)
   const barRef = useRef(null)
   const layerRefs = useRef([])
   const activeRef = useRef(0)
@@ -66,6 +67,11 @@ export default function HowItWorks() {
         if (textRef.current) {
           textRef.current.style.opacity = fade
           textRef.current.style.transform = `translateY(${(1 - fade) * 10}px)`
+        }
+        // giant background number: fade + swap at boundaries (same smooth motion as text)
+        if (numRef.current) {
+          numRef.current.style.opacity = fade
+          if (numRef.current.textContent !== steps[i].n) numRef.current.textContent = steps[i].n
         }
 
         // crossfade visuals + gentle parallax on the active one
@@ -94,9 +100,9 @@ export default function HowItWorks() {
 
         {/* giant background step number — left watermark behind the text */}
         <div
-          key={active}
+          ref={numRef}
           aria-hidden
-          className="absolute left-[-2vw] md:left-[2vw] top-1/2 -translate-y-1/2 font-extrabold leading-none pointer-events-none select-none text-cream/[0.04] animate-[fadein_0.6s_ease]"
+          className="absolute left-[-2vw] md:left-[2vw] top-1/2 -translate-y-1/2 font-extrabold leading-none pointer-events-none select-none text-cream/[0.04] will-change-[opacity]"
           style={{ fontSize: 'min(42vw, 540px)' }}
         >
           {step.n}
