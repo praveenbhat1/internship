@@ -16,7 +16,9 @@ body {
   color: #f3f2e9;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /* `clip` (not `hidden`) prevents horizontal scroll WITHOUT creating a scroll
+     container — `hidden` here would silently break position: sticky (How it works). */
+  overflow-x: clip;
 }
 
 html.lenis,
@@ -29,6 +31,18 @@ html.lenis body {
 
 ::selection {
   background: rgba(168, 177, 75, 0.35);
+}
+
+/* subtle film grain for depth (sits above everything, ignores pointer events) */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .gradient-text {
@@ -48,6 +62,39 @@ html.lenis body {
   background: linear-gradient(180deg, rgba(28, 30, 18, 0.7), rgba(17, 18, 11, 0.7));
   border: 1px solid #2b2d1c;
   border-radius: 18px;
+  transition:
+    transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(168, 177, 75, 0.35);
+  box-shadow: 0 24px 60px -34px rgba(168, 177, 75, 0.4);
+}
+
+/* keyboard-accessible focus rings */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #a8b14b;
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* premium button interaction */
+.btn {
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+.btn:hover {
+  transform: translateY(-2px);
+}
+.btn:active {
+  transform: translateY(0);
 }
 
 .glow {

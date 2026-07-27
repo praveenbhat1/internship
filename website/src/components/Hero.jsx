@@ -193,13 +193,13 @@ export default function Hero() {
           <div className="mt-8 flex flex-wrap items-center justify-center md:justify-start gap-3.5">
             <a
               href="#demo"
-              className="hero-cta px-6 py-3 rounded-full bg-olive text-ink font-semibold hover:brightness-110 transition glow"
+              className="btn hero-cta px-6 py-3 rounded-full bg-olive text-ink font-semibold hover:brightness-110 glow"
             >
               Try the live demo ↓
             </a>
             <a
               href="#results"
-              className="hero-cta px-6 py-3 rounded-full border border-line text-muted hover:text-cream hover:border-olive/50 transition"
+              className="btn hero-cta px-6 py-3 rounded-full border border-line text-muted hover:text-cream hover:border-olive/50"
             >
               See results
             </a>

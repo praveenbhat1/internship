@@ -87,7 +87,7 @@ export default function Nav() {
         </nav>
         <a
           href="#demo"
-          className="text-sm px-4 py-2 rounded-full bg-olive/15 border border-olive/40 text-cream hover:bg-olive/25 transition-colors"
+          className="btn text-sm px-4 py-2 rounded-full bg-olive/15 border border-olive/40 text-cream hover:bg-olive/25"
         >
           Try it
         </a>
