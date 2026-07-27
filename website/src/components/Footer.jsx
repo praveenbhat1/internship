@@ -36,7 +36,12 @@ export default function Footer() {
             <a href="mailto:praveenbhat46@gmail.com" className="hover:text-cream transition-colors">
               Email
             </a>
-            <a href="#" className="hover:text-cream transition-colors">
+            <a
+              href="https://github.com/praveenbhat1/internship"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-cream transition-colors"
+            >
               GitHub
             </a>
             <a href="#top" className="hover:text-cream transition-colors">

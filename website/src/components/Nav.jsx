@@ -13,14 +13,41 @@ const links = [
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false)
   const [online, setOnline] = useState(null)
+  const [active, setActive] = useState('top')
+  const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', onScroll)
+    const onScroll = () => {
+      setScrolled(window.scrollY > 40)
+      const h = document.documentElement
+      const max = h.scrollHeight - h.clientHeight
+      setProgress(max > 0 ? (h.scrollTop / max) * 100 : 0)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+
+    // active-section highlighting
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActive(e.target.id)
+        })
+      },
+      { rootMargin: '-45% 0px -45% 0px' },
+    )
+    links.forEach(([, id]) => {
+      const el = document.getElementById(id)
+      if (el) obs.observe(el)
+    })
+
     fetch(`${API}/health`)
       .then((r) => setOnline(r.ok))
       .catch(() => setOnline(false))
-    return () => window.removeEventListener('scroll', onScroll)
+
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      obs.disconnect()
+    }
   }, [])
 
   return (
@@ -29,9 +56,17 @@ export default function Nav() {
         scrolled ? 'py-3 glass' : 'py-5 bg-transparent'
       }`}
     >
+      {/* scroll progress bar */}
+      <div
+        className="absolute top-0 left-0 h-0.5 bg-olive transition-[width] duration-150"
+        style={{ width: `${progress}%` }}
+      />
+
       <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
         <a href="#top" className="flex items-center gap-2 font-mono text-sm font-semibold tracking-wider text-cream">
-          PAR<span className="text-olive">.</span>vision
+          <span>
+            PAR<span className="text-olive">.</span>vision
+          </span>
           <span
             title={online ? 'model online' : 'model offline'}
             className={`h-1.5 w-1.5 rounded-full ${
@@ -39,9 +74,13 @@ export default function Nav() {
             }`}
           />
         </a>
-        <nav className="hidden md:flex items-center gap-6 text-sm text-muted">
+        <nav className="hidden md:flex items-center gap-6 text-sm">
           {links.map(([label, id]) => (
-            <a key={id} href={`#${id}`} className="hover:text-cream transition-colors">
+            <a
+              key={id}
+              href={`#${id}`}
+              className={`transition-colors ${active === id ? 'text-olive2' : 'text-muted hover:text-cream'}`}
+            >
               {label}
             </a>
           ))}
