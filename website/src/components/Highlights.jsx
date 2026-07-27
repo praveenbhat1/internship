@@ -33,7 +33,7 @@ export default function Highlights() {
     <section id="results" ref={ref} className="relative py-28 px-6 border-t border-line/60">
       <div className="max-w-6xl mx-auto">
         <SectionHead
-          label="02 — Results"
+          label="03 — Results"
           title="Accurate in-domain, and it generalizes."
           sub="The headline numbers. The model was trained on PA-100K and then tested — with no retraining — on PETA, a completely different dataset, to prove it learned general features."
         />

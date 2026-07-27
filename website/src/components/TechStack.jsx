@@ -19,7 +19,7 @@ export default function TechStack() {
     <section id="tech" className="relative py-28 px-6 border-t border-line/60">
       <div className="max-w-6xl mx-auto">
         <SectionHead
-          label="03 — What we used"
+          label="04 — What we used"
           title="A frozen backbone, with light modules on top."
           sub="Rather than fine-tuning a giant model, the design keeps SigLIP frozen and adds small, interpretable modules — each earning its place."
         />

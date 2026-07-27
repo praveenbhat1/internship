@@ -285,9 +285,22 @@ export default function LiveDemo() {
           </div>
         </div>
 
-        {/* stage images exactly like demo.py */}
+        {/* stage images in model order: 1 -> 2 -> 3 -> 4 */}
         {result?.images && (
           <div className="reveal mt-8 space-y-5">
+            {/* Step 1 — SigLIP feature */}
+            {result.images.feature && (
+              <div className="card p-5">
+                <div className="text-xs font-mono text-olive2 mb-3">Step 1 — SigLIP feature</div>
+                <img
+                  src={result.images.feature}
+                  alt="SigLIP feature"
+                  className="rounded-lg mx-auto w-full max-w-2xl"
+                />
+              </div>
+            )}
+
+            {/* Step 2 — CMAA */}
             {result.images.cmaa && (
               <div className="card p-5">
                 <div className="flex items-center justify-between mb-4">
@@ -341,20 +354,17 @@ export default function LiveDemo() {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-5">
-              {[
-                ['Step 1 — SigLIP feature', result.images.feature],
-                ['Step 4 — DACG correlations', result.images.dacg],
-              ].map(
-                ([label, src]) =>
-                  src && (
-                    <div key={label} className="card p-5">
-                      <div className="text-xs font-mono text-olive2 mb-3">{label}</div>
-                      <img src={src} alt={label} className="rounded-lg mx-auto" />
-                    </div>
-                  ),
-              )}
-            </div>
+            {/* Step 4 — DACG */}
+            {result.images.dacg && (
+              <div className="card p-5">
+                <div className="text-xs font-mono text-olive2 mb-3">Step 4 — DACG correlations</div>
+                <img
+                  src={result.images.dacg}
+                  alt="DACG correlations"
+                  className="rounded-lg mx-auto w-full max-w-xl"
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

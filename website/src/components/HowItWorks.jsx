@@ -63,7 +63,10 @@ export default function HowItWorks() {
         <div className="relative max-w-6xl mx-auto px-6 w-full grid md:grid-cols-2 gap-10 md:gap-14 items-center">
           {/* LEFT — text + progress */}
           <div>
-            <div className="section-label mb-5">How it works · Step {step.n}</div>
+            <div className="flex items-center gap-3 mb-5">
+              <span className="h-px w-8 bg-olive/70" />
+              <span className="section-label">02 — How it works</span>
+            </div>
             <div key={active} className="animate-[fadein_0.5s_ease]">
               <div className="inline-block text-xs font-mono px-3 py-1 rounded-full border border-olive/40 text-olive2 mb-5">
                 {step.tag}
