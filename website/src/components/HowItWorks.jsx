@@ -92,6 +92,16 @@ export default function HowItWorks() {
       <div className="sticky top-0 h-screen flex items-center overflow-hidden border-t border-line/60">
         <div className="absolute inset-0 grid-bg opacity-25" />
 
+        {/* giant background step number */}
+        <div
+          key={active}
+          aria-hidden
+          className="absolute right-2 md:right-10 top-1/2 -translate-y-1/2 font-extrabold leading-none pointer-events-none select-none text-cream/[0.035] animate-[fadein_0.6s_ease]"
+          style={{ fontSize: 'min(48vw, 620px)' }}
+        >
+          {step.n}
+        </div>
+
         <div className="relative max-w-6xl mx-auto px-6 w-full grid md:grid-cols-2 gap-10 md:gap-14 items-center">
           {/* LEFT — text + progress */}
           <div>
