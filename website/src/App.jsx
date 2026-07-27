@@ -42,10 +42,23 @@ export default function App() {
       })
     })
 
+    // Recalculate ScrollTrigger positions whenever the page height changes
+    // (images loading, live-demo results appearing). Without this, pinned/
+    // progress triggers like "How it works" read stale offsets and skip steps.
+    let rt
+    const ro = new ResizeObserver(() => {
+      clearTimeout(rt)
+      rt = setTimeout(() => ScrollTrigger.refresh(), 200)
+    })
+    ro.observe(document.body)
+    window.addEventListener('load', () => ScrollTrigger.refresh())
+
     return () => {
       gsap.ticker.remove(raf)
       lenis.destroy()
       ctx.revert()
+      ro.disconnect()
+      clearTimeout(rt)
     }
   }, [])
 
