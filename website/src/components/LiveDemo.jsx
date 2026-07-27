@@ -9,10 +9,67 @@ const samples = [
   ['095832.jpg', '/assets/095832.jpg'],
 ]
 
+// attribute -> category
+const CATEGORY = {
+  Female: 'Gender',
+  Front: 'Viewpoint', Side: 'Viewpoint', Back: 'Viewpoint',
+  Hat: 'Accessories', Glasses: 'Accessories', HandBag: 'Accessories',
+  ShoulderBag: 'Accessories', Backpack: 'Accessories', HoldObjectsInFront: 'Accessories',
+  ShortSleeve: 'Clothing', LongSleeve: 'Clothing', UpperStride: 'Clothing', UpperLogo: 'Clothing',
+  UpperPlaid: 'Clothing', UpperSplice: 'Clothing', LowerStripe: 'Clothing', LowerPattern: 'Clothing',
+  LongCoat: 'Clothing', Trousers: 'Clothing', Shorts: 'Clothing', 'Skirt&Dress': 'Clothing',
+  boots: 'Clothing',
+}
+const GROUPS = ['Clothing', 'Accessories', 'Viewpoint', 'Gender']
+
+// human-friendly phrasing for the summary sentence
+const NICE = {
+  ShortSleeve: 'a short-sleeve top', LongSleeve: 'a long-sleeve top', LongCoat: 'a long coat',
+  UpperStride: 'a striped top', UpperPlaid: 'a plaid top', UpperLogo: 'a logo top',
+  UpperSplice: 'a spliced top', Trousers: 'trousers', Shorts: 'shorts', 'Skirt&Dress': 'a skirt/dress',
+  LowerStripe: 'striped lower-wear', LowerPattern: 'patterned lower-wear', boots: 'boots',
+  Hat: 'a hat', Glasses: 'glasses', HandBag: 'a handbag', ShoulderBag: 'a shoulder bag',
+  Backpack: 'a backpack', HoldObjectsInFront: 'an object in front',
+}
+const nice = (n) => NICE[n] || n.replace(/([A-Z])/g, ' $1').trim().toLowerCase()
+
+function humanList(arr) {
+  if (arr.length === 0) return ''
+  if (arr.length === 1) return arr[0]
+  return arr.slice(0, -1).join(', ') + ' and ' + arr[arr.length - 1]
+}
+
+function summarize(result) {
+  const det = result.attrs.filter((a) => a.pred).map((a) => a.name)
+  const vp = Object.entries(result.viewpoint).sort((a, b) => b[1] - a[1])[0][0].toLowerCase()
+  const clothing = det.filter((n) => CATEGORY[n] === 'Clothing').map(nice)
+  const worn = det.filter((n) => n === 'Hat' || n === 'Glasses').map(nice)
+  const carried = det
+    .filter((n) => ['HandBag', 'ShoulderBag', 'Backpack', 'HoldObjectsInFront'].includes(n))
+    .map(nice)
+
+  let subject = 'A person'
+  if (result.gender.reported)
+    subject = result.gender.label === 'Female' ? 'A woman' : 'A man'
+
+  const parts = [`${subject} facing ${vp}`]
+  if (clothing.length) parts.push(`wearing ${humanList(clothing)}`)
+  if (worn.length) parts.push(`with ${humanList(worn)}`)
+  if (carried.length) parts.push(`carrying ${humanList(carried)}`)
+  return parts.join(', ') + '.'
+}
+
+function barStyle(a) {
+  if (!a.pred) return '#2b2d1c'
+  if (a.prob >= 80) return 'linear-gradient(90deg,#6f763a,#c8d17a)' // confident
+  return 'linear-gradient(90deg,#8a6d2a,#e0b34e)' // borderline (amber)
+}
+
 export default function LiveDemo() {
   const [preview, setPreview] = useState(null)
   const [result, setResult] = useState(null)
   const [status, setStatus] = useState('idle') // idle | loading | done | error
+  const [errMsg, setErrMsg] = useState('')
   const [online, setOnline] = useState(null)
   const inputRef = useRef(null)
 
@@ -26,18 +83,22 @@ export default function LiveDemo() {
   async function analyzeBlob(blob, previewUrl) {
     setPreview(previewUrl)
     setResult(null)
+    setErrMsg('')
     setStatus('loading')
     try {
       const fd = new FormData()
       fd.append('file', blob, 'upload.jpg')
       const r = await fetch(`${API}/predict`, { method: 'POST', body: fd })
-      if (!r.ok) throw new Error('bad response')
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}))
+        throw new Error(body.error || 'The model could not process this image.')
+      }
       setResult(await r.json())
       setStatus('done')
       setOnline(true)
-    } catch {
+    } catch (e) {
+      setErrMsg(e.message)
       setStatus('error')
-      setOnline(false)
     }
   }
 
@@ -45,7 +106,6 @@ export default function LiveDemo() {
     if (!file) return
     analyzeBlob(file, URL.createObjectURL(file))
   }
-
   async function onSample(src) {
     const blob = await (await fetch(src)).blob()
     analyzeBlob(blob, src)
@@ -53,6 +113,7 @@ export default function LiveDemo() {
 
   const detected = result?.attrs.filter((a) => a.pred) || []
   const others = result?.attrs.filter((a) => !a.pred).slice(0, 4) || []
+  const rows = [...detected, ...others]
 
   return (
     <section id="demo" className="relative py-28 px-6 border-t border-line/60">
@@ -88,17 +149,24 @@ export default function LiveDemo() {
               className="card p-4 cursor-pointer hover:border-olive/50 transition-colors relative overflow-hidden"
             >
               {preview ? (
-                <img src={preview} alt="input" className="rounded-xl mx-auto max-h-[380px]" />
+                <img
+                  src={preview}
+                  alt="input"
+                  className="rounded-xl mx-auto max-h-[380px]"
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
               ) : (
                 <div className="h-[300px] flex flex-col items-center justify-center text-center gap-3 border-2 border-dashed border-line rounded-xl">
                   <div className="text-4xl">⬆</div>
                   <div className="text-cream font-medium">Drop an image or click to upload</div>
-                  <div className="text-xs text-muted">a cropped photo of one person</div>
+                  <div className="text-xs text-muted">a cropped photo of one person · JPG or PNG</div>
                 </div>
               )}
               {status === 'loading' && (
                 <div className="absolute inset-0 bg-ink/70 flex items-center justify-center">
-                  <div className="text-olive2 font-mono text-sm animate-pulse">analyzing…</div>
+                  <div className="text-olive2 font-mono text-sm animate-pulse">
+                    encoding → attending → predicting…
+                  </div>
                 </div>
               )}
             </div>
@@ -129,7 +197,7 @@ export default function LiveDemo() {
           {/* RIGHT — output */}
           <div className="reveal">
             <div className="card p-6 min-h-[300px]">
-              {!result && status !== 'loading' && (
+              {!result && status !== 'loading' && status !== 'error' && (
                 <div className="h-[260px] flex items-center justify-center text-muted text-sm text-center">
                   {online === false
                     ? 'Start the model server to run the demo.'
@@ -141,10 +209,25 @@ export default function LiveDemo() {
                   running the model…
                 </div>
               )}
+              {status === 'error' && (
+                <div className="h-[260px] flex flex-col items-center justify-center text-center gap-2">
+                  <div className="text-2xl">🚫</div>
+                  <div className="text-cream text-sm">{errMsg}</div>
+                  <div className="text-xs text-muted">Try a clear JPG or PNG of a single person.</div>
+                </div>
+              )}
               {result && (
                 <>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-mono text-xs text-muted">model output</span>
+                  {/* plain-English summary */}
+                  <div className="mb-5 pb-4 border-b border-line">
+                    <div className="text-[0.65rem] font-mono text-olive2 uppercase tracking-widest mb-1.5">
+                      Summary
+                    </div>
+                    <p className="text-cream text-[0.95rem] leading-relaxed">{summarize(result)}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-mono text-xs text-muted">confidence per attribute</span>
                     <span className="text-xs px-2 py-1 rounded-full bg-olive/15 text-olive2">
                       viewpoint:{' '}
                       {Object.entries(result.viewpoint).sort((a, b) => b[1] - a[1])[0][0]}
@@ -152,25 +235,36 @@ export default function LiveDemo() {
                   </div>
 
                   <div className="space-y-2.5">
-                    {[...detected, ...others].map((a) => (
+                    {rows.map((a) => (
                       <div key={a.name} className="flex items-center gap-3 text-sm">
-                        <span className={`w-28 ${a.pred ? 'text-cream' : 'text-muted line-through'}`}>
+                        <span className={`w-28 truncate ${a.pred ? 'text-cream' : 'text-muted line-through'}`}>
                           {a.name}
                         </span>
                         <div className="flex-1 h-2 rounded-full bg-line overflow-hidden">
                           <div
                             className="h-full rounded-full transition-[width] duration-700 ease-out"
-                            style={{
-                              width: `${a.prob}%`,
-                              background: a.pred
-                                ? 'linear-gradient(90deg,#6f763a,#c8d17a)'
-                                : '#2b2d1c',
-                            }}
+                            style={{ width: `${a.prob}%`, background: barStyle(a) }}
                           />
                         </div>
                         <span className="w-9 text-right font-mono text-xs text-muted">{a.prob}%</span>
                       </div>
                     ))}
+                  </div>
+
+                  {/* legend */}
+                  <div className="flex items-center gap-4 mt-4 text-[0.65rem] text-muted">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-4 rounded-full" style={{ background: 'linear-gradient(90deg,#6f763a,#c8d17a)' }} />
+                      confident
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-4 rounded-full" style={{ background: 'linear-gradient(90deg,#8a6d2a,#e0b34e)' }} />
+                      borderline
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-4 rounded-full bg-line" />
+                      rejected
+                    </span>
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-line text-sm">
@@ -194,7 +288,6 @@ export default function LiveDemo() {
         {/* stage images exactly like demo.py */}
         {result?.images && (
           <div className="reveal mt-8 space-y-5">
-            {/* CMAA is a wide strip — give it the full width so the heatmaps are large */}
             {result.images.cmaa && (
               <div className="card p-5">
                 <div className="flex items-center justify-between mb-4">
@@ -213,7 +306,41 @@ export default function LiveDemo() {
               </div>
             )}
 
-            {/* the two square-ish plots side by side */}
+            {/* Step 3 — OCFR viewpoint */}
+            <div className="card p-5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-mono text-olive2">
+                  Step 3 — OCFR: which way the person faces
+                </span>
+                <span className="text-[0.65rem] font-mono text-muted hidden sm:block">
+                  reweights features per viewpoint
+                </span>
+              </div>
+              <div className="space-y-2.5 max-w-xl">
+                {['Front', 'Side', 'Back'].map((v) => {
+                  const val = result.viewpoint[v]
+                  const win = val === Math.max(...Object.values(result.viewpoint))
+                  return (
+                    <div key={v} className="flex items-center gap-3 text-sm">
+                      <span className={`w-14 ${win ? 'text-cream font-semibold' : 'text-muted'}`}>
+                        {v}
+                      </span>
+                      <div className="flex-1 h-2 rounded-full bg-line overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-[width] duration-700 ease-out"
+                          style={{
+                            width: `${val}%`,
+                            background: win ? 'linear-gradient(90deg,#6f763a,#c8d17a)' : '#2b2d1c',
+                          }}
+                        />
+                      </div>
+                      <span className="w-9 text-right font-mono text-xs text-muted">{val}%</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-5">
               {[
                 ['Step 1 — SigLIP feature', result.images.feature],

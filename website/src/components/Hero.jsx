@@ -154,11 +154,14 @@ export default function Hero() {
   }, [])
 
   return (
-    <section id="top" className="relative min-h-screen flex items-center overflow-hidden">
+    <section
+      id="top"
+      className="relative min-h-screen flex items-center overflow-hidden pt-32 pb-20 md:pt-28"
+    >
       <div className="absolute inset-0 grid-bg opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-ink" />
 
-      <div className="relative max-w-6xl mx-auto px-6 w-full grid md:grid-cols-2 gap-10 items-center pt-24 md:pt-0">
+      <div className="relative max-w-6xl mx-auto px-6 w-full grid md:grid-cols-2 gap-10 items-center">
         {/* LEFT — copy */}
         <div ref={contentRef} className="text-center md:text-left">
           <div className="hero-sub section-label mb-5 text-[0.68rem] md:text-xs">

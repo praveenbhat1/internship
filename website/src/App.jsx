@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Nav from './components/Nav.jsx'
 import Hero from './components/Hero.jsx'
 import LiveDemo from './components/LiveDemo.jsx'
+import HowItWorks from './components/HowItWorks.jsx'
 import Highlights from './components/Highlights.jsx'
 import TechStack from './components/TechStack.jsx'
 import Footer from './components/Footer.jsx'
@@ -53,6 +54,7 @@ export default function App() {
       <main>
         <Hero />
         <LiveDemo />
+        <HowItWorks />
         <Highlights />
         <TechStack />
       </main>
