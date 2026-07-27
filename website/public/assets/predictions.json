@@ -1,0 +1,408 @@
+{
+  "model": "Full 23-attr (SigLIP2 + OCFR + CMAA + DACG + CCLoss)",
+  "metrics": {
+    "mA": 91.12,
+    "Accuracy": 75.49,
+    "Precision": 79.04,
+    "Recall": 92.63,
+    "F1": 85.3,
+    "n_test": 10000,
+    "model": "Full 23-attr (CMAA+OCFR+DACG+CCLoss, 3 epochs + augmentation)",
+    "note": "Leak-free: val-selected epoch, val-calibrated thresholds, reported on held-out test."
+  },
+  "results": [
+    {
+      "image": "090001.jpg",
+      "viewpoint": {
+        "Front": 0,
+        "Side": 99,
+        "Back": 0
+      },
+      "gender": {
+        "label": "Male",
+        "conf": 99,
+        "reported": true,
+        "why": ""
+      },
+      "attrs": [
+        {
+          "name": "Trousers",
+          "prob": 100,
+          "pred": true
+        },
+        {
+          "name": "Side",
+          "prob": 99,
+          "pred": true
+        },
+        {
+          "name": "HandBag",
+          "prob": 98,
+          "pred": true
+        },
+        {
+          "name": "LongSleeve",
+          "prob": 95,
+          "pred": true
+        },
+        {
+          "name": "Glasses",
+          "prob": 72,
+          "pred": true
+        },
+        {
+          "name": "ShortSleeve",
+          "prob": 5,
+          "pred": false
+        },
+        {
+          "name": "Backpack",
+          "prob": 5,
+          "pred": false
+        },
+        {
+          "name": "ShoulderBag",
+          "prob": 3,
+          "pred": false
+        },
+        {
+          "name": "Front",
+          "prob": 2,
+          "pred": false
+        },
+        {
+          "name": "UpperPlaid",
+          "prob": 2,
+          "pred": false
+        },
+        {
+          "name": "Female",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "Back",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "UpperLogo",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "boots",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "UpperStride",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "LongCoat",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "HoldObjectsInFront",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "Hat",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "LowerPattern",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "Shorts",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "UpperSplice",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "LowerStripe",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "Skirt&Dress",
+          "prob": 0,
+          "pred": false
+        }
+      ]
+    },
+    {
+      "image": "094166.jpg",
+      "viewpoint": {
+        "Front": 4,
+        "Side": 96,
+        "Back": 0
+      },
+      "gender": {
+        "label": null,
+        "conf": null,
+        "reported": false,
+        "why": "only 28% confident"
+      },
+      "attrs": [
+        {
+          "name": "Trousers",
+          "prob": 99,
+          "pred": true
+        },
+        {
+          "name": "Glasses",
+          "prob": 99,
+          "pred": true
+        },
+        {
+          "name": "Side",
+          "prob": 98,
+          "pred": true
+        },
+        {
+          "name": "LongSleeve",
+          "prob": 91,
+          "pred": true
+        },
+        {
+          "name": "Female",
+          "prob": 28,
+          "pred": false
+        },
+        {
+          "name": "ShortSleeve",
+          "prob": 8,
+          "pred": false
+        },
+        {
+          "name": "Front",
+          "prob": 4,
+          "pred": false
+        },
+        {
+          "name": "Backpack",
+          "prob": 3,
+          "pred": false
+        },
+        {
+          "name": "UpperPlaid",
+          "prob": 2,
+          "pred": false
+        },
+        {
+          "name": "Skirt&Dress",
+          "prob": 2,
+          "pred": false
+        },
+        {
+          "name": "Back",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "UpperStride",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "UpperLogo",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "ShoulderBag",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "HandBag",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "Hat",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "Shorts",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "LowerPattern",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "HoldObjectsInFront",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "boots",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "LongCoat",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "UpperSplice",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "LowerStripe",
+          "prob": 0,
+          "pred": false
+        }
+      ]
+    },
+    {
+      "image": "095832.jpg",
+      "viewpoint": {
+        "Front": 0,
+        "Side": 48,
+        "Back": 52
+      },
+      "gender": {
+        "label": "Male",
+        "conf": 96,
+        "reported": true,
+        "why": ""
+      },
+      "attrs": [
+        {
+          "name": "Trousers",
+          "prob": 100,
+          "pred": true
+        },
+        {
+          "name": "UpperStride",
+          "prob": 100,
+          "pred": true
+        },
+        {
+          "name": "LongSleeve",
+          "prob": 98,
+          "pred": true
+        },
+        {
+          "name": "Glasses",
+          "prob": 87,
+          "pred": true
+        },
+        {
+          "name": "Side",
+          "prob": 65,
+          "pred": true
+        },
+        {
+          "name": "Back",
+          "prob": 62,
+          "pred": false
+        },
+        {
+          "name": "UpperLogo",
+          "prob": 21,
+          "pred": false
+        },
+        {
+          "name": "Female",
+          "prob": 4,
+          "pred": false
+        },
+        {
+          "name": "UpperPlaid",
+          "prob": 3,
+          "pred": false
+        },
+        {
+          "name": "ShortSleeve",
+          "prob": 2,
+          "pred": false
+        },
+        {
+          "name": "UpperSplice",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "Front",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "ShoulderBag",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "Backpack",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "HandBag",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "boots",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "HoldObjectsInFront",
+          "prob": 1,
+          "pred": false
+        },
+        {
+          "name": "LowerStripe",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "Skirt&Dress",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "LongCoat",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "Hat",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "Shorts",
+          "prob": 0,
+          "pred": false
+        },
+        {
+          "name": "LowerPattern",
+          "prob": 0,
+          "pred": false
+        }
+      ]
+    }
+  ]
+}

@@ -11,6 +11,9 @@ Run:  python demo_full.py            (local, http://127.0.0.1:7860)
       python demo_full.py --share    (public temporary link for a remote demo)
 """
 import argparse, json, os
+# Load models from the local HF cache — no internet needed (override with HF_HUB_OFFLINE=0)
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 import numpy as np
 import torch
 import gradio as gr
