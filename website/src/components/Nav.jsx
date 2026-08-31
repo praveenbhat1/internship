@@ -41,11 +41,26 @@ export default function Nav() {
       if (el) obs.observe(el)
     })
 
-    fetch(`${API}/health`)
-      .then((r) => setOnline(r.ok))
-      .catch(() => setOnline(false))
+    // Free HF Spaces sleep when idle; retry before showing the red "offline" dot.
+    let cancelled = false
+    ;(async () => {
+      for (let i = 0; i < 15 && !cancelled; i++) {
+        try {
+          const r = await fetch(`${API}/health`, { cache: 'no-store' })
+          if (r.ok) {
+            if (!cancelled) setOnline(true)
+            return
+          }
+        } catch {
+          /* still waking */
+        }
+        await new Promise((s) => setTimeout(s, 5000))
+      }
+      if (!cancelled) setOnline(false)
+    })()
 
     return () => {
+      cancelled = true
       window.removeEventListener('scroll', onScroll)
       obs.disconnect()
     }

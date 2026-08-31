@@ -1,0 +1,16 @@
+# Slim dependency set for the Hugging Face Space (serve.py only — no training, no Gradio).
+# torch comes from the CPU-only wheel index (see Dockerfile): the default PyPI wheel pulls
+# ~2.5 GB of unused NVIDIA CUDA libraries, which makes the Space build slow and fragile.
+torch>=2.2,<3
+transformers>=4.45
+peft>=0.11
+matplotlib>=3.7
+numpy>=1.24
+pandas>=2.0          # imported by train_par_full.py, which serve.py imports FullPAR from
+pillow>=9.0
+sentencepiece>=0.1.99
+protobuf>=3.20
+fastapi>=0.110
+uvicorn>=0.27
+python-multipart>=0.0.9
+pillow-heif>=0.15    # optional: allows iPhone HEIC uploads

@@ -74,10 +74,27 @@ export default function LiveDemo() {
   const inputRef = useRef(null)
 
   useEffect(() => {
-    fetch(`${API}/health`)
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(() => setOnline(true))
-      .catch(() => setOnline(false))
+    let cancelled = false
+    // A free Hugging Face Space sleeps when idle and takes ~30-60 s to wake, so poll
+    // before declaring it offline. `online` stays null (neutral) until we're sure.
+    ;(async () => {
+      for (let i = 0; i < 15 && !cancelled; i++) {
+        try {
+          const r = await fetch(`${API}/health`, { cache: 'no-store' })
+          if (r.ok) {
+            if (!cancelled) setOnline(true)
+            return
+          }
+        } catch {
+          /* still waking */
+        }
+        await new Promise((s) => setTimeout(s, 5000))
+      }
+      if (!cancelled) setOnline(false)
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   async function analyzeBlob(blob, previewUrl) {
@@ -88,7 +105,22 @@ export default function LiveDemo() {
     try {
       const fd = new FormData()
       fd.append('file', blob, 'upload.jpg')
-      const r = await fetch(`${API}/predict`, { method: 'POST', body: fd })
+      // CPU inference plus a cold-start wake can take a while; cap it so a stalled
+      // request fails with a message instead of spinning forever.
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 120000)
+      let r
+      try {
+        r = await fetch(`${API}/predict`, { method: 'POST', body: fd, signal: ctrl.signal })
+      } catch (e) {
+        throw new Error(
+          e.name === 'AbortError'
+            ? 'The model server took too long to respond. It may still be waking up — try again in a minute.'
+            : 'Could not reach the model server. It may be waking up — try again in a minute.'
+        )
+      } finally {
+        clearTimeout(timer)
+      }
       if (!r.ok) {
         const body = await r.json().catch(() => ({}))
         throw new Error(body.error || 'The model could not process this image.')

@@ -1,0 +1,10 @@
+# Keep the Space image small: serve.py only needs par_full.pt + the three JSON files.
+__pycache__/
+archive/
+proof_images/
+test_images/
+*.png
+*.jpg
+features/*.npy
+features/*.pt
+!features/par_full.pt

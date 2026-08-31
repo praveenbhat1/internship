@@ -3,7 +3,8 @@
 FROM python:3.11-slim
 
 ENV HF_HOME=/app/hf_cache \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    MPLCONFIGDIR=/app/mpl_cache
 
 WORKDIR /app
 
@@ -11,11 +12,21 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg62-turbo libpng16-16 && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# CPU-only torch first, so the CUDA wheels (~2.5 GB, useless on a CPU Space) are never pulled.
+COPY requirements-space.txt .
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu "torch>=2.2,<3" \
+ && pip install --no-cache-dir -r requirements-space.txt
+
+# Bake the SigLIP-2 backbone (~1.5 GB) into the image at BUILD time.
+# Without this the first visitor triggers the download and their request hangs for minutes.
+RUN python -c "from huggingface_hub import snapshot_download; \
+snapshot_download('google/siglip2-large-patch16-256')"
 
 COPY . .
 
+# The backbone is cached above, so refuse to reach the network at runtime — a hung
+# HF request can otherwise make /predict stall instead of failing fast.
+ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+
 EXPOSE 7860
-# SigLIP-2 (~1.5 GB) downloads on first boot, then is cached in the image layer/volume.
 CMD ["uvicorn", "serve:app", "--host", "0.0.0.0", "--port", "7860"]
