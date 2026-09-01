@@ -1,0 +1,13 @@
+# `gcloud run deploy --source .` uses THIS file (not .dockerignore) to decide what to
+# upload to Cloud Build. Without it gcloud falls back to .gitignore — and there is none
+# in mvp/, so all 52 MB gets uploaded on every deploy. Keep it in sync with .dockerignore.
+.git/
+__pycache__/
+archive/
+proof_images/
+test_images/
+*.png
+*.jpg
+features/*.npy
+features/*.pt
+!features/par_full.pt

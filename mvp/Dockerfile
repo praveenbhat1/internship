@@ -28,5 +28,7 @@ COPY . .
 # HF request can otherwise make /predict stall instead of failing fast.
 ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 
-EXPOSE 7860
-CMD ["uvicorn", "serve:app", "--host", "0.0.0.0", "--port", "7860"]
+# Cloud Run injects $PORT (8080) and routes traffic there; locally it's unset, so
+# fall back to 7860. Shell form is required for the variable to expand.
+EXPOSE 8080
+CMD ["sh", "-c", "uvicorn serve:app --host 0.0.0.0 --port ${PORT:-7860}"]
